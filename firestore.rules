@@ -1,0 +1,164 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isSuperAdmin() {
+      return isAuthenticated() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        request.auth.token.email == 'minideveloper41@gmail.com'
+      );
+    }
+
+    // Admins collection
+    // - Any user can check their own admin doc
+    // - Super Admins can list and write
+    match /admins/{adminId} {
+      allow get: if isAuthenticated() && (request.auth.uid == adminId || isSuperAdmin());
+      allow list, write: if isSuperAdmin();
+    }
+
+    // App Settings: Read by all authenticated users, write only by Super Admin
+    match /appSettings/{settingId} {
+      allow read: if isAuthenticated();
+      allow write: if isSuperAdmin();
+    }
+
+    // Audit Logs: Read by Super Admin; create by authenticated users/admins
+    match /auditLogs/{logId} {
+      allow get, list: if isSuperAdmin();
+      allow create: if isAuthenticated();
+      allow update, delete: if isSuperAdmin();
+    }
+
+    // Users collection:
+    // - Super Admin can read and write all users
+    // - User can read their own document
+    // - User can create their initial account during signup
+    // - User can update their profile, but CANNOT modify role, plan, or expiry dates
+    match /users/{userId} {
+      allow get: if isAuthenticated() && (request.auth.uid == userId || isSuperAdmin());
+      allow list: if isSuperAdmin();
+      
+      allow create: if isAuthenticated() && request.auth.uid == userId
+        && (!('status' in request.resource.data) || request.resource.data.status == 'active');
+      
+      allow update: if isSuperAdmin() || (
+        isAuthenticated() && request.auth.uid == userId
+        // Enforce that user cannot change their own privileged subscription fields:
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.plan == resource.data.plan
+        && request.resource.data.status == resource.data.status
+        && (!('trialEndsAt' in resource.data) || request.resource.data.trialEndsAt == resource.data.trialEndsAt)
+        && (!('premiumExpiresAt' in resource.data) || request.resource.data.premiumExpiresAt == resource.data.premiumExpiresAt)
+      );
+
+      allow delete: if isSuperAdmin();
+    }
+
+    // Payments collection:
+    // - User can create payment with status 'pending' tied to their own shopId
+    // - User can view their own payments
+    // - Only Super Admin can approve, reject, or edit
+    match /payments/{paymentId} {
+      allow get: if isAuthenticated() && (resource.data.shopId == request.auth.uid || isSuperAdmin());
+      allow list: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && request.resource.data.shopId == request.auth.uid
+        && request.resource.data.status == 'pending';
+      allow update, delete: if isSuperAdmin();
+    }
+
+    // Products collection: Multi-tenant isolated by shopId
+    match /products/{productId} {
+      allow get: if isAuthenticated() && (resource.data.shopId == request.auth.uid || isSuperAdmin());
+      allow list: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.shopId == request.auth.uid;
+      allow update: if isAuthenticated() && (
+        isSuperAdmin() ||
+        (resource.data.shopId == request.auth.uid && request.resource.data.shopId == request.auth.uid)
+      );
+      allow delete: if isAuthenticated() && (resource.data.shopId == request.auth.uid || isSuperAdmin());
+    }
+
+    // Stock Movements collection: Isolated by shopId
+    match /stockMovements/{movementId} {
+      allow get: if isAuthenticated() && (resource.data.shopId == request.auth.uid || isSuperAdmin());
+      allow list: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.shopId == request.auth.uid;
+      allow update, delete: if isSuperAdmin();
+    }
+
+    // Sales & Invoices collection: Isolated by shopId
+    match /sales/{saleId} {
+      allow get: if isAuthenticated() && (resource.data.shopId == request.auth.uid || isSuperAdmin());
+      allow list: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.shopId == request.auth.uid;
+      allow update: if isAuthenticated() && (
+        isSuperAdmin() ||
+        (resource.data.shopId == request.auth.uid && request.resource.data.shopId == request.auth.uid)
+      );
+      allow delete: if isSuperAdmin();
+    }
+
+    // Expenses collection: Isolated by shopId
+    match /expenses/{expenseId} {
+      allow get: if isAuthenticated() && (resource.data.shopId == request.auth.uid || isSuperAdmin());
+      allow list: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.shopId == request.auth.uid;
+      allow update: if isAuthenticated() && (
+        isSuperAdmin() ||
+        (resource.data.shopId == request.auth.uid && request.resource.data.shopId == request.auth.uid)
+      );
+      allow delete: if isAuthenticated() && (resource.data.shopId == request.auth.uid || isSuperAdmin());
+    }
+
+    // Customers collection: Isolated by shopId
+    match /customers/{customerId} {
+      allow get: if isAuthenticated() && (resource.data.shopId == request.auth.uid || isSuperAdmin());
+      allow list: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.shopId == request.auth.uid;
+      allow update: if isAuthenticated() && (
+        isSuperAdmin() ||
+        (resource.data.shopId == request.auth.uid && request.resource.data.shopId == request.auth.uid)
+      );
+      allow delete: if isAuthenticated() && (resource.data.shopId == request.auth.uid || isSuperAdmin());
+    }
+
+    // Customer Ledger (Dues / Payments history): Isolated by shopId
+    match /customerLedger/{ledgerId} {
+      allow get: if isAuthenticated() && (resource.data.shopId == request.auth.uid || isSuperAdmin());
+      allow list: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.shopId == request.auth.uid;
+      allow update, delete: if isSuperAdmin();
+    }
+
+    // Suppliers collection: Isolated by shopId
+    match /suppliers/{supplierId} {
+      allow get: if isAuthenticated() && (resource.data.shopId == request.auth.uid || isSuperAdmin());
+      allow list: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.shopId == request.auth.uid;
+      allow update: if isAuthenticated() && (
+        isSuperAdmin() ||
+        (resource.data.shopId == request.auth.uid && request.resource.data.shopId == request.auth.uid)
+      );
+      allow delete: if isAuthenticated() && (resource.data.shopId == request.auth.uid || isSuperAdmin());
+    }
+
+    // Purchases collection: Isolated by shopId
+    match /purchases/{purchaseId} {
+      allow get: if isAuthenticated() && (resource.data.shopId == request.auth.uid || isSuperAdmin());
+      allow list: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.shopId == request.auth.uid;
+      allow update: if isAuthenticated() && (
+        isSuperAdmin() ||
+        (resource.data.shopId == request.auth.uid && request.resource.data.shopId == request.auth.uid)
+      );
+      allow delete: if isSuperAdmin();
+    }
+  }
+}

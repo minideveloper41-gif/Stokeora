@@ -1,0 +1,6 @@
+{
+  "name": "Stockora — SaaS Business & Inventory Management",
+  "description": "Stockora: Manage Stock. Grow Your Business. Bengali-first modern SaaS for shops, retailers, and wholesalers in Bangladesh.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
