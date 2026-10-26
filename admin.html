@@ -104,34 +104,55 @@
   <!-- ================= ACCESS RESTRICTED SCREEN (If unauthenticated or not admin) ================= -->
   <div id="unauthorizedScreen" class="flex-1 flex items-center justify-center p-4">
     <div class="w-full max-w-md bg-navy-900 border border-amber-500/30 rounded-3xl p-6 shadow-2xl space-y-4 text-center">
-      <div class="w-16 h-16 mx-auto rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-        <i data-lucide="shield-alert" class="w-8 h-8"></i>
-      </div>
-      <div>
-        <h2 class="text-lg font-bold text-white">সুপার অ্যাডমিন প্রমাণীকরণ</h2>
-        <p class="text-xs text-slate-400 mt-1">এই প্যানেলে প্রবেশের জন্য অনুমোদিত সুপার অ্যাডমিন একাউন্ট আবশ্যক।</p>
-      </div>
-
-      <!-- Admin Login Form -->
-      <form id="adminLoginForm" onsubmit="window.adminApp.handleAdminLogin(event)" class="space-y-3 text-left text-xs">
-        <div>
-          <label class="block text-slate-300 font-medium mb-1">অ্যাডমিন ইমেইল:</label>
-          <input type="email" id="adminLoginEmail" required placeholder="admin@stockora.com" class="w-full bg-navy-850 border border-slate-700 rounded-xl p-2.5 text-slate-100 focus:outline-none focus:border-amber-500" />
+      
+      <!-- State 1: Unauthenticated Login Form -->
+      <div id="adminLoginState">
+        <div class="w-16 h-16 mx-auto rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-3">
+          <i data-lucide="shield-alert" class="w-8 h-8"></i>
         </div>
         <div>
-          <label class="block text-slate-300 font-medium mb-1">পাসওয়ার্ড:</label>
-          <input type="password" id="adminLoginPassword" required placeholder="••••••••" class="w-full bg-navy-850 border border-slate-700 rounded-xl p-2.5 text-slate-100 focus:outline-none focus:border-amber-500" />
+          <h2 class="text-lg font-bold text-white">সুপার অ্যাডমিন প্রমাণীকরণ</h2>
+          <p class="text-xs text-slate-400 mt-1">এই প্যানেলে প্রবেশের জন্য অনুমোদিত সুপার অ্যাডমিন একাউন্ট আবশ্যক।</p>
         </div>
-        <button type="submit" id="btnAdminLogin" class="w-full py-2.5 bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold rounded-xl shadow-lg transition mt-2">
-          অ্যাডমিন হিসেবে লগইন
-        </button>
-      </form>
 
-      <!-- First-time bootstrap alert -->
-      <div class="pt-4 border-t border-slate-800 text-left text-[11px] space-y-2">
-        <p class="text-amber-300/80 font-semibold">প্রথমবার সেটআপ / বুটস্ট্র্যাপ নির্দেশিকা:</p>
-        <p class="text-slate-400">যদি এখনো কোন অ্যাডমিন একাউন্ট তৈরি করা না থাকে, তবে Firebase Console এ গিয়ে <code class="text-amber-400 font-mono">admins</code> কালেকশনে আপনার ইউজার আইডি (UID) যোগ করুন অথবা আপনার ইউজার ডকুমেন্টে <code class="text-amber-400 font-mono">role: "superadmin"</code> সেট করুন।</p>
+        <!-- Admin Login Form -->
+        <form id="adminLoginForm" onsubmit="window.adminApp.handleAdminLogin(event)" class="space-y-3 text-left text-xs mt-4">
+          <div>
+            <label class="block text-slate-300 font-medium mb-1">অ্যাডমিন ইমেইল:</label>
+            <input type="email" id="adminLoginEmail" required placeholder="admin@stockora.com" class="w-full bg-navy-850 border border-slate-700 rounded-xl p-2.5 text-slate-100 focus:outline-none focus:border-amber-500" />
+          </div>
+          <div>
+            <label class="block text-slate-300 font-medium mb-1">পাসওয়ার্ড:</label>
+            <input type="password" id="adminLoginPassword" required placeholder="••••••••" class="w-full bg-navy-850 border border-slate-700 rounded-xl p-2.5 text-slate-100 focus:outline-none focus:border-amber-500" />
+          </div>
+          <button type="submit" id="btnAdminLogin" class="w-full py-2.5 bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold rounded-xl shadow-lg transition mt-2">
+            অ্যাডমিন হিসেবে লগইন
+          </button>
+        </form>
       </div>
+
+      <!-- State 2: Logged-in Non-Admin Access Denied View -->
+      <div id="accessDeniedState" class="hidden space-y-4">
+        <div class="w-16 h-16 mx-auto rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400">
+          <i data-lucide="shield-x" class="w-8 h-8"></i>
+        </div>
+        <div>
+          <h2 class="text-lg font-bold text-white">প্রবেশাধিকার সংরক্ষিত (Access Denied)</h2>
+          <p class="text-xs text-rose-300 mt-1">আপনি বর্তমানে (<span id="unauthEmailDisplay" class="font-mono text-white font-bold"></span>) হিসেবে লগইন আছেন। এই অ্যাকাউন্টে সুপার অ্যাডমিন পারমিশন নেই।</p>
+        </div>
+        <p class="text-[11px] text-slate-400">স্টকোরা অ্যাডমিন প্যানেল শুধুমাত্র অনুমোদিত সুপার অ্যাডমিনদের জন্য। আপনার অ্যাকাউন্টটি একটি সাধারণ দোকানদার অ্যাকাউন্ট।</p>
+        <div class="pt-2 flex flex-col gap-2">
+          <a href="index.html" class="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition">
+            <i data-lucide="store" class="w-4 h-4"></i>
+            <span>দোকানের মূল অ্যাপে ফিরে যান (Shop App)</span>
+          </a>
+          <button type="button" onclick="window.adminApp.handleSignOut()" class="w-full py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium rounded-xl text-xs flex items-center justify-center gap-1.5 transition">
+            <i data-lucide="log-out" class="w-4 h-4"></i>
+            <span>লগআউট করে সঠিক অ্যাডমিন অ্যাকাউন্টে লগইন</span>
+          </button>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -1223,20 +1244,36 @@
           document.getElementById('adminHeaderEmail').textContent = user.email;
           attachAdminListeners();
         } else {
-          setAdminUnauthenticated('এই অ্যাকাউন্টে সুপার অ্যাডমিন পারমিশন নেই। সঠিক অ্যাডমিন ইমেইল দিয়ে লগইন করুন।');
+          setAdminUnauthenticated('এই অ্যাকাউন্টে সুপার অ্যাডমিন পারমিশন নেই। সঠিক অ্যাডমিন ইমেইল দিয়ে লগইন করুন।', user);
         }
       } catch (err) {
         console.warn("Auth check note:", err.message);
-        setAdminUnauthenticated('প্রমাণীকরণ সম্পন্ন করা যায়নি। পুনরায় লগইন করুন।');
+        setAdminUnauthenticated('প্রমাণীকরণ সম্পন্ন করা যায়নি। পুনরায় লগইন করুন।', user);
       }
     }
 
-    function setAdminUnauthenticated(msg = '') {
+    function setAdminUnauthenticated(msg = '', user = null) {
       adminState.currentAdmin = null;
       document.getElementById('unauthorizedScreen').classList.remove('hidden');
       document.getElementById('adminConsole').classList.add('hidden');
       document.getElementById('adminAuthHeader').classList.add('hidden');
       detachAdminListeners();
+
+      const loginState = document.getElementById('adminLoginState');
+      const accessDenied = document.getElementById('accessDeniedState');
+      const unauthEmailDisplay = document.getElementById('unauthEmailDisplay');
+
+      if (user && user.email) {
+        // Logged-in non-admin account
+        if (loginState) loginState.classList.add('hidden');
+        if (accessDenied) accessDenied.classList.remove('hidden');
+        if (unauthEmailDisplay) unauthEmailDisplay.textContent = user.email;
+      } else {
+        // Not logged in
+        if (loginState) loginState.classList.remove('hidden');
+        if (accessDenied) accessDenied.classList.add('hidden');
+      }
+
       if (msg) showToast(msg, 'error');
     }
 

@@ -6,11 +6,14 @@
   <title>Stockora — স্টক ও ব্যবসা ব্যবস্থাপনা সফটওয়্যার</title>
   <meta name="description" content="Manage Stock. Grow Your Business. Bengali-first modern SaaS for retail, wholesale, stationery, and grocery shops in Bangladesh." />
   <link rel="icon" type="image/png" href="https://i.postimg.cc/nLyfZyTs/file-0000000046a48211a8039735e4e524a5.png" />
+  <meta property="og:title" content="Stockora — স্টক ও ব্যবসা ব্যবস্থাপনা সফটওয়্যার" />
+  <meta property="og:description" content="Manage Stock. Grow Your Business. Bengali-first modern SaaS for retail, wholesale, stationery, and grocery shops in Bangladesh." />
+  <meta property="og:type" content="website" />
   
-  <!-- Google Fonts: Hind Siliguri (Bangla) & Inter -->
+  <!-- Google Fonts: Hind Siliguri (Bangla), Plus Jakarta Sans & Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -21,11 +24,11 @@
         extend: {
           colors: {
             navy: {
-              950: '#060B18',
-              900: '#0B132B',
-              850: '#101B3D',
-              800: '#172554',
-              700: '#1E3A8A',
+              950: '#050914',
+              900: '#091124',
+              850: '#0E1A38',
+              800: '#14244D',
+              700: '#1C336D',
             },
             stockora: {
               blue: '#2563EB',
@@ -33,12 +36,14 @@
               green: '#10B981',
               emerald: '#059669',
               amber: '#F59E0B',
-              rose: '#F43F5E'
+              rose: '#F43F5E',
+              cyan: '#06B6D4'
             }
           },
           fontFamily: {
             bangla: ['"Hind Siliguri"', 'system-ui', 'sans-serif'],
-            sans: ['"Inter"', '"Hind Siliguri"', 'system-ui', 'sans-serif']
+            sans: ['"Plus Jakarta Sans"', '"Inter"', '"Hind Siliguri"', 'system-ui', 'sans-serif'],
+            display: ['"Plus Jakarta Sans"', 'sans-serif']
           }
         }
       }
@@ -48,25 +53,57 @@
   <!-- Lucide Icons & Chart.js -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- HTML5 QR / Barcode Scanner (Camera Barcode Detector) -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <!-- JsBarcode for printable barcode stickers & labels -->
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 
   <style>
     body {
-      font-family: 'Hind Siliguri', 'Inter', system-ui, -apple-system, sans-serif;
+      font-family: 'Hind Siliguri', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     }
     .num {
-      font-family: 'Inter', system-ui, sans-serif;
+      font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
     }
     /* Custom Scrollbar */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #0b132b; }
-    ::-webkit-scrollbar-thumb { background: #1e3a8a; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #2563eb; }
+    ::-webkit-scrollbar-track { background: #091124; }
+    ::-webkit-scrollbar-thumb { background: #1c336d; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
 
-    /* Print Styling for thermal & A4 invoice */
+    /* Scanner Viewfinder Laser */
+    @keyframes scanLaser {
+      0% { top: 12%; opacity: 0.8; }
+      50% { top: 88%; opacity: 1; }
+      100% { top: 12%; opacity: 0.8; }
+    }
+    .scanner-laser {
+      position: absolute;
+      left: 6%;
+      width: 88%;
+      height: 2px;
+      background: #10B981;
+      box-shadow: 0 0 14px 3px rgba(16, 185, 129, 0.9);
+      animation: scanLaser 2s infinite ease-in-out;
+      z-index: 10;
+    }
+
+    /* Print Styling for thermal invoice & barcode sticker sheet */
     @media print {
       body * { visibility: hidden; }
-      #printableInvoice, #printableInvoice * { visibility: visible; }
-      #printableInvoice {
+      body.printing-barcodes #printableBarcodeSheet, body.printing-barcodes #printableBarcodeSheet * { visibility: visible; }
+      body.printing-barcodes #printableBarcodeSheet {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 4px;
+        background: white !important;
+        color: black !important;
+      }
+      body:not(.printing-barcodes) #printableInvoice, body:not(.printing-barcodes) #printableInvoice * { visibility: visible; }
+      body:not(.printing-barcodes) #printableInvoice {
         position: absolute;
         left: 0;
         top: 0;
@@ -123,10 +160,10 @@
           <span>নতুন বিক্রয় (POS)</span>
         </button>
 
-        <!-- Admin Portal Link -->
-        <a href="admin.html" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white text-xs border border-slate-700 transition" title="Super Admin Dashboard">
+        <!-- Admin Portal Link (Hidden by default; only shown to verified admins) -->
+        <a id="headerAdminLink" href="admin.html" class="hidden inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-950/40 hover:bg-amber-900/60 text-amber-300 hover:text-white text-xs border border-amber-600/40 transition shadow-sm" title="Super Admin Dashboard">
           <i data-lucide="shield-check" class="w-3.5 h-3.5 text-amber-400"></i>
-          <span class="hidden md:inline">সুপার অ্যাডমিন</span>
+          <span class="hidden md:inline font-semibold">সুপার অ্যাডমিন</span>
         </a>
 
         <!-- Subscription / Upgrade Button -->
@@ -162,6 +199,9 @@
             </a>
             <a href="javascript:void(0)" onclick="window.app.switchView('subscription'); window.app.toggleUserMenu();" class="flex items-center gap-2.5 px-4 py-2 text-xs text-slate-300 hover:bg-slate-800/80 hover:text-white">
               <i data-lucide="credit-card" class="w-4 h-4 text-blue-400"></i> সাবস্ক্রিপশন ও bKash/Nagad
+            </a>
+            <a id="menuAdminLink" href="admin.html" class="hidden flex items-center gap-2.5 px-4 py-2 text-xs text-amber-300 hover:bg-amber-950/40 hover:text-white">
+              <i data-lucide="shield-check" class="w-4 h-4 text-amber-400"></i> সুপার অ্যাডমিন প্যানেল
             </a>
             <div class="border-t border-slate-800 my-1"></div>
             <button onclick="window.app.handleLogout()" class="w-full text-left flex items-center gap-2.5 px-4 py-2 text-xs text-rose-400 hover:bg-rose-500/10">
@@ -240,13 +280,22 @@
     <main class="flex-1 p-3 md:p-6 overflow-x-hidden">
 
       <!-- ALERT BANNER (For suspended / expired accounts) -->
-      <div id="statusAlertBanner" class="hidden mb-4 p-3 rounded-xl bg-amber-950/80 border border-amber-600/50 text-amber-200 text-xs flex items-center justify-between gap-3">
-        <div class="flex items-center gap-2">
-          <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400 shrink-0"></i>
-          <span id="statusAlertText">আপনার ট্রায়ালের মেয়াদ শেষ হয়েছে। অনুগ্রহ করে প্রিমিয়ামে আপগ্রেড করুন।</span>
+      <div id="statusAlertBanner" class="hidden mb-4 p-4 rounded-2xl bg-gradient-to-r from-rose-950/90 via-red-950/80 to-navy-900 border-2 border-rose-600/60 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex items-start gap-3">
+          <div class="p-2.5 rounded-xl bg-rose-500/20 text-rose-400 shrink-0">
+            <i data-lucide="lock" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <span id="statusAlertTitle">আপনার ফ্রি ট্রায়ালের মেয়াদ শেষ হয়েছে!</span>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-rose-600 text-white font-extrabold uppercase">Locked</span>
+            </h3>
+            <p id="statusAlertText" class="text-xs text-rose-200/90 mt-1">দোকানের নতুন বিক্রি, পণ্য যোগ ও স্টক ব্যবস্থাপনা সচল রাখতে অনুগ্রহ করে প্রিমিয়াম প্ল্যানে আপগ্রেড করুন।</p>
+          </div>
         </div>
-        <button onclick="window.app.switchView('subscription')" class="shrink-0 px-2.5 py-1 bg-amber-600 hover:bg-amber-500 text-white font-semibold rounded-lg text-xs">
-          আপগ্রেড
+        <button onclick="window.app.switchView('subscription')" class="shrink-0 px-4 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-bold rounded-xl text-xs shadow-lg transition flex items-center gap-1.5">
+          <i data-lucide="sparkles" class="w-4 h-4"></i>
+          <span>বিকাশ/নগদে প্রিমিয়াম নিন</span>
         </button>
       </div>
 
@@ -473,17 +522,34 @@
 
       <!-- VIEW: POS & NEW SALE -->
       <section id="view-pos" class="hidden space-y-4">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-navy-900 via-navy-850 to-slate-900 p-3.5 rounded-2xl border border-slate-800 shadow-xl">
           <div>
-            <h2 class="text-lg font-bold text-white flex items-center gap-2">
-              <i data-lucide="shopping-cart" class="w-5 h-5 text-emerald-400"></i>
-              <span>বিক্রয় ও পয়েন্ট অফ সেল (POS Terminal)</span>
+            <h2 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+              <span class="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                <i data-lucide="scan-barcode" class="w-4 h-4"></i>
+              </span>
+              <span>পয়েন্ট অব সেল ও বিক্রয় (POS Terminal)</span>
             </h2>
-            <p class="text-xs text-slate-400">পণ্য সিলেক্ট করে দ্রুত ইনভয়েস তৈরি করুন</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">ক্যামেরা দিয়ে বারকোড স্ক্যান করুন বা পণ্য সিলেক্ট করে দ্রুত মেমো দিন</p>
           </div>
-          <button onclick="window.app.resetPosCart()" class="text-xs px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300">
-            কার্ট খালি করুন
-          </button>
+          <div class="flex items-center gap-2 flex-wrap">
+            <!-- Camera Barcode Scanner Button -->
+            <button onclick="window.app.openBarcodeScanner()" class="px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-950/60 border border-emerald-400/30 flex items-center gap-2 transition transform active:scale-95">
+              <i data-lucide="camera" class="w-4 h-4 text-emerald-200"></i>
+              <span>ক্যামেরা বারকোড স্ক্যান</span>
+            </button>
+
+            <!-- Daily Cash Register Button -->
+            <button onclick="window.app.openCashRegisterModal()" class="px-3 py-2 bg-navy-800 hover:bg-slate-800 text-blue-300 font-semibold text-xs rounded-xl border border-blue-500/30 flex items-center gap-1.5 transition">
+              <i data-lucide="wallet" class="w-3.5 h-3.5 text-blue-400"></i>
+              <span>ক্যাশ ড্রয়ার</span>
+            </button>
+
+            <!-- Reset Cart Button -->
+            <button onclick="window.app.resetPosCart()" class="text-xs px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-rose-300 transition" title="কার্ট খালি করুন">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
@@ -493,7 +559,10 @@
             <div class="flex flex-col sm:flex-row gap-2">
               <div class="relative flex-1">
                 <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
-                <input type="text" id="posSearchInput" oninput="window.app.filterPosProducts()" placeholder="পণ্যের নাম বা বারকোড দিয়ে খুঁজুন..." class="w-full pl-9 pr-3 py-2 bg-navy-900 border border-slate-700 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500" />
+                <input type="text" id="posSearchInput" oninput="window.app.filterPosProducts()" placeholder="পণ্যের নাম বা বারকোড দিয়ে খুঁজুন (Enter চাপুন)..." class="w-full pl-9 pr-10 py-2.5 bg-navy-900 border border-slate-700 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500" />
+                <button type="button" onclick="window.app.openBarcodeScanner()" title="ক্যামেরা বারকোড স্ক্যানার চালু করুন" class="absolute right-2 top-2 p-1 text-slate-400 hover:text-emerald-400 rounded-lg hover:bg-slate-800 transition">
+                  <i data-lucide="scan" class="w-4 h-4"></i>
+                </button>
               </div>
               <select id="posCategoryFilter" onchange="window.app.filterPosProducts()" class="bg-navy-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500">
                 <option value="all">সকল ক্যাটাগরি</option>
@@ -517,22 +586,54 @@
                 <span id="posCartItemCount" class="text-xs px-2 py-0.5 rounded-full bg-blue-600/30 text-blue-400 border border-blue-500/40 font-bold num">0 টি আইটেম</span>
               </div>
 
-              <!-- Customer Selector -->
-              <div class="mt-3 p-2.5 rounded-xl bg-navy-850 border border-slate-800">
+              <!-- Customer Selector & Credit Info -->
+              <div id="posCustomerCardWrapper" class="mt-3 p-3 rounded-xl bg-navy-850 border border-slate-800 transition">
                 <div class="flex items-center justify-between mb-1.5">
-                  <label class="text-[11px] font-semibold text-slate-300">কাস্টমার নির্বাচন (বাকি থাকলে আবশ্যক)</label>
-                  <button type="button" onclick="window.app.openModal('addCustomerModal')" class="text-[10px] text-blue-400 hover:underline flex items-center gap-1">
-                    <i data-lucide="user-plus" class="w-3 h-3"></i> নতুন কাস্টমার
+                  <label class="text-[11px] font-semibold text-slate-300 flex items-center gap-1.5">
+                    <i data-lucide="user" class="w-3.5 h-3.5 text-blue-400"></i>
+                    <span>কাস্টমার নির্বাচন (বাকি বিক্রির জন্য আবশ্যক)</span>
+                  </label>
+                  <button type="button" onclick="window.app.openQuickCustomerModalFromPos()" class="text-[10px] text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/40 hover:bg-emerald-900/60 transition">
+                    <i data-lucide="user-plus" class="w-3 h-3"></i> + নতুন কাস্টমার
                   </button>
                 </div>
-                <select id="posCustomerId" class="w-full bg-navy-900 border border-slate-700 rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500">
+                <select id="posCustomerId" onchange="window.app.onPosCustomerChange()" class="w-full bg-navy-900 border border-slate-700 rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500">
                   <option value="">সাধারণ নগদ ক্রেতা (Walk-in Customer)</option>
                 </select>
+
+                <!-- Customer Outstanding Due Card (Shows when customer selected) -->
+                <div id="posCustomerDueCard" class="hidden mt-2 p-2.5 rounded-lg bg-navy-900/90 border border-amber-500/40 text-xs space-y-1.5">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-1.5 truncate">
+                      <span id="posCustSelectedName" class="font-bold text-slate-100 truncate">কাস্টমার নাম</span>
+                      <span id="posCustSelectedPhone" class="text-[10px] text-slate-400 font-mono">01xxxxxxxxx</span>
+                    </div>
+                    <button type="button" id="posCustWhatsAppBtn" onclick="window.app.sendCustomerDueWhatsAppFromPos()" title="WhatsApp এ বকেয়া তাগাদা পাঠান" class="px-2 py-0.5 bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white rounded text-[10px] font-bold border border-emerald-500/40 flex items-center gap-1 shrink-0 transition">
+                      <i data-lucide="message-circle" class="w-3 h-3"></i> WhatsApp
+                    </button>
+                  </div>
+                  <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-800 text-[11px]">
+                    <div>
+                      <span class="text-slate-400 block text-[10px]">পূর্বের বকেয়া:</span>
+                      <span class="font-bold text-amber-400 num">৳ <span id="posCustPreviousDue">0.00</span></span>
+                    </div>
+                    <div class="text-right">
+                      <span class="text-slate-400 block text-[10px]">এই বিক্রি শেষে মোট বাকি:</span>
+                      <span class="font-extrabold text-rose-400 num">৳ <span id="posCustTotalDueAfter">0.00</span></span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Missing Customer Alert Banner (Shows when due exists but no customer selected) -->
+                <div id="posMissingCustomerAlert" class="hidden mt-2 p-2 rounded-lg bg-rose-500/15 border border-rose-500/40 text-rose-300 text-[11px] flex items-center gap-1.5 font-medium animate-pulse">
+                  <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0 text-rose-400"></i>
+                  <span>বাকিতে পণ্য দিতে কাস্টমার বেছে নেওয়া বা নতুন কাস্টমার যোগ করা আবশ্যক!</span>
+                </div>
               </div>
 
               <!-- Cart Line Items -->
               <div id="posCartList" class="my-3 space-y-2 max-h-52 overflow-y-auto pr-1 text-xs divide-y divide-slate-800/80">
-                <p class="text-slate-500 py-6 text-center">কার্ট খালি। বাম পাশ থেকে পণ্য নির্বাচন করুন।</p>
+                <p class="text-slate-500 py-6 text-center">কার্ট খালি। বাম পাশ থেকে পণ্য বা বারকোড স্ক্যান করুন।</p>
               </div>
             </div>
 
@@ -563,8 +664,9 @@
               <div class="grid grid-cols-2 gap-2 pt-1">
                 <div>
                   <label class="text-[10px] text-slate-400 block mb-0.5">পেমেন্ট মেথড:</label>
-                  <select id="posPaymentMethod" class="w-full bg-navy-850 border border-slate-700 rounded-lg p-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500">
+                  <select id="posPaymentMethod" onchange="window.app.onPosPaymentMethodChange()" class="w-full bg-navy-850 border border-slate-700 rounded-lg p-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500">
                     <option value="cash">নগদ (Cash)</option>
+                    <option value="due">বাকি বিক্রি (100% Due / Credit)</option>
                     <option value="bkash">বিকাশ (bKash)</option>
                     <option value="nagad">নগদ (Nagad)</option>
                     <option value="rocket">রকেট (Rocket)</option>
@@ -577,7 +679,32 @@
                 </div>
               </div>
 
-              <!-- Due balance indicator -->
+              <!-- Quick Cash Tender Buttons -->
+              <div>
+                <span class="text-[10px] text-slate-400 block mb-1">কুইক ক্যাশ ও বাকি বাটন (Quick Tender):</span>
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <button type="button" onclick="window.app.applyFullDueSale()" class="px-2 py-0.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded text-[10px] font-bold border border-amber-500/50 flex items-center gap-1 shadow-sm transition">
+                    <i data-lucide="clock-alert" class="w-3 h-3 text-amber-400"></i>
+                    <span>সম্পূর্ণ বাকি (৳০ নগদ)</span>
+                  </button>
+                  <button type="button" onclick="window.app.applyQuickCashTender('exact')" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded text-[10px] font-medium border border-slate-700">সমান নগদ</button>
+                  <button type="button" onclick="window.app.applyQuickCashTender('set', 50)" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-emerald-300 rounded text-[10px] font-bold border border-slate-700 num">৳৫০</button>
+                  <button type="button" onclick="window.app.applyQuickCashTender('set', 100)" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-emerald-300 rounded text-[10px] font-bold border border-slate-700 num">৳১০০</button>
+                  <button type="button" onclick="window.app.applyQuickCashTender('set', 500)" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-emerald-300 rounded text-[10px] font-bold border border-slate-700 num">৳৫০০</button>
+                  <button type="button" onclick="window.app.applyQuickCashTender('set', 1000)" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-emerald-300 rounded text-[10px] font-bold border border-slate-700 num">৳১০০০</button>
+                </div>
+              </div>
+
+              <!-- Change return notice (when paid > grandTotal) -->
+              <div id="posChangeNotice" class="hidden p-2 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-xs flex justify-between items-center font-bold">
+                <span class="flex items-center gap-1.5">
+                  <i data-lucide="hand-coins" class="w-4 h-4 text-emerald-400"></i>
+                  <span>কাস্টমারকে ফেরত দিন (Change):</span>
+                </span>
+                <span class="num text-sm text-emerald-200">৳ <span id="posChangeAmount">0.00</span></span>
+              </div>
+
+              <!-- Due balance indicator (when paid < grandTotal) -->
               <div id="posDueNotice" class="hidden p-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] flex justify-between">
                 <span>বাকি থাকবে (Due):</span>
                 <span class="font-bold num">৳ <span id="posDueAmount">0.00</span></span>
@@ -604,6 +731,16 @@
             <p class="text-xs text-slate-400">স্টক আপডেট, ক্রয়মূল্য, বিক্রয়মূল্য ও বারকোড ট্র্যাকিং</p>
           </div>
           <div class="flex flex-wrap items-center gap-2">
+            <!-- Barcode Sticker Label Generator Button -->
+            <button onclick="window.app.openBarcodePrinterModal()" class="px-3 py-1.5 bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-slate-950 font-bold text-xs rounded-lg flex items-center gap-1.5 shadow">
+              <i data-lucide="tag" class="w-3.5 h-3.5"></i>
+              <span>বারকোড স্টিকার প্রিন্ট</span>
+            </button>
+            <!-- Reorder List Button -->
+            <button onclick="window.app.openReorderModal()" class="px-2.5 py-1.5 bg-navy-800 hover:bg-slate-700 text-cyan-300 text-xs rounded-lg border border-cyan-500/30 flex items-center gap-1.5">
+              <i data-lucide="clipboard-list" class="w-3.5 h-3.5 text-cyan-400"></i>
+              <span>রি-অর্ডার শিট</span>
+            </button>
             <button onclick="window.app.downloadProductCsvTemplate()" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-lg border border-slate-700 flex items-center gap-1.5" title="Download Template">
               <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
               <span>টেমপ্লেট</span>
@@ -616,6 +753,10 @@
             <button onclick="window.app.exportProductsCsv()" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-lg border border-slate-700 flex items-center gap-1.5">
               <i data-lucide="download" class="w-3.5 h-3.5"></i>
               <span>CSV এক্সপোর্ট</span>
+            </button>
+            <button onclick="window.app.openFastProductAddModal()" class="px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-lg shadow-emerald-950 transition">
+              <i data-lucide="scan-line" class="w-3.5 h-3.5 text-emerald-200"></i>
+              <span>ক্যামেরায় দ্রুত পণ্য এন্ট্রি (Fast Stacker)</span>
             </button>
             <button onclick="window.app.openModal('addProductModal')" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 shadow">
               <i data-lucide="plus" class="w-3.5 h-3.5"></i>
@@ -1023,8 +1164,8 @@
                   <span>প্রিমিয়াম (Premium)</span>
                 </h3>
               </div>
-              <div class="text-xl font-bold text-emerald-400 mb-1 num">৳ ৪৯৯ <span class="text-xs font-normal text-slate-400">/ মাস</span></div>
-              <p class="text-[11px] text-blue-300 mb-3">অথবা বাৎসরিক মাত্র ৳ ৪,৯৯০ (২ মাস ফ্রি)</p>
+              <div class="text-xl font-bold text-emerald-400 mb-1 num"><span id="premCardPrice">৳ ৪৯৯</span> <span class="text-xs font-normal text-slate-400">/ মাস</span></div>
+              <p id="premCardYearPrice" class="text-[11px] text-blue-300 mb-3">অথবা বাৎসরিক মাত্র ৳ ৪,৯৯০ (২ মাস ফ্রি)</p>
               <ul class="space-y-2 text-xs text-slate-200">
                 <li class="flex items-center gap-2"><i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i> <strong>সীমাহীন পণ্য সংরক্ষণ (Unlimited)</strong></li>
                 <li class="flex items-center gap-2"><i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i> পূর্ণাঙ্গ লাভ-ক্ষতি ও একাউন্টিং বিশ্লেষণ</li>
@@ -1409,8 +1550,24 @@
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-slate-300 font-medium mb-1">বারকোড / কোড (SKU):</label>
-            <input type="text" id="prodSku" placeholder="স্বয়ংক্রিয় বা কোড দিন" class="w-full bg-navy-850 border border-slate-700 rounded-xl p-2.5 text-slate-100 font-mono focus:outline-none focus:border-blue-500" />
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-slate-300 font-medium">বারকোড / কোড (SKU):</label>
+              <span class="text-[10px] text-emerald-400 font-medium flex items-center gap-0.5">
+                <i data-lucide="scan" class="w-2.5 h-2.5"></i> স্ক্যান রেডি
+              </span>
+            </div>
+            <div class="relative flex items-center">
+              <input type="text" id="prodSku" oninput="window.app.checkProductSkuDuplicate(this.value)" placeholder="স্বয়ংক্রিয় বা কোড দিন" class="w-full bg-navy-850 border border-slate-700 rounded-xl pl-3 pr-28 py-2.5 text-slate-100 font-mono text-xs focus:outline-none focus:border-blue-500" />
+              <button type="button" onclick="window.app.openBarcodeScannerForProductAdd()" class="absolute right-1 px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-[10px] font-bold flex items-center gap-1 shadow transition">
+                <i data-lucide="camera" class="w-3.5 h-3.5"></i>
+                <span>ক্যামেরা স্ক্যান</span>
+              </button>
+            </div>
+            <!-- Duplicate SKU warning banner -->
+            <div id="skuDuplicateNotice" class="hidden mt-1.5 p-2 rounded-lg bg-amber-500/15 border border-amber-500/40 text-amber-300 text-[11px] space-y-1">
+              <span id="skuDuplicateText" class="block font-medium"></span>
+              <button type="button" id="skuDuplicateStockBtn" class="px-2 py-0.5 bg-amber-500/30 hover:bg-amber-500 text-amber-200 hover:text-black rounded text-[10px] font-bold transition">স্টক বৃদ্ধি করুন</button>
+            </div>
           </div>
           <div>
             <label class="block text-slate-300 font-medium mb-1">ক্যাটাগরি:</label>
@@ -1712,6 +1869,11 @@
           <span>বিক্রয় রসিদ (Invoice)</span>
         </h3>
         <div class="flex items-center gap-2">
+          <!-- WhatsApp Receipt Share Button -->
+          <button type="button" onclick="window.app.shareInvoiceWhatsApp()" class="px-3 py-1 bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs rounded-lg flex items-center gap-1 shadow transition">
+            <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
+            <span>হোয়াটসঅ্যাপ রসিদ</span>
+          </button>
           <button onclick="window.print()" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg flex items-center gap-1">
             <i data-lucide="printer" class="w-3.5 h-3.5"></i> প্রিন্ট
           </button>
@@ -1791,10 +1953,18 @@
             <span>৳ <span id="invPaid">0.00</span></span>
           </div>
           <div id="invDueRow" class="flex justify-between font-bold text-red-600">
-            <span>বাকি (Due):</span>
+            <span>এই চালানের বাকি (Current Due):</span>
             <span>৳ <span id="invDue">0.00</span></span>
           </div>
-          <div class="flex justify-between text-[10px] text-slate-500">
+          <div id="invPrevDueRow" class="hidden flex justify-between text-amber-700 font-medium">
+            <span>পূর্বের বকেয়া (Previous Due):</span>
+            <span>+ ৳ <span id="invPrevDue">0.00</span></span>
+          </div>
+          <div id="invTotalDueRow" class="hidden flex justify-between font-extrabold text-red-700 pt-1 border-t border-dotted border-slate-400">
+            <span>সর্বমোট অবশিষ্ট বকেয়া:</span>
+            <span>৳ <span id="invTotalDue">0.00</span></span>
+          </div>
+          <div class="flex justify-between text-[10px] text-slate-500 pt-0.5">
             <span>পেমেন্ট মাধ্যম:</span>
             <span id="invPaymentMethod" class="uppercase">নগদ</span>
           </div>
@@ -1805,6 +1975,404 @@
           <p id="invFooterNote" class="text-[11px] font-semibold text-slate-800">ধন্যবাদ, আবার আসবেন!</p>
           <p class="text-[9px] text-slate-400 mt-0.5">Powered by Stockora SaaS</p>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= BARCODE CAMERA SCANNER MODAL ================= -->
+  <div id="barcodeScannerModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/90 backdrop-blur-md">
+    <div class="w-full max-w-md bg-navy-900 border border-slate-700 rounded-3xl shadow-2xl p-5 relative">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+          <i data-lucide="camera" class="w-4 h-4 text-emerald-400"></i>
+          <span>ক্যামেরা বারকোড স্ক্যানার</span>
+        </h3>
+        <button onclick="window.app.stopBarcodeScanner()" class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Controls: Camera switch & Mode -->
+      <div class="py-2.5 flex items-center justify-between gap-2 text-xs">
+        <div class="flex items-center gap-1.5 flex-1">
+          <i data-lucide="video" class="w-3.5 h-3.5 text-slate-400"></i>
+          <select id="scannerCameraSelect" onchange="window.app.startCameraScanner(this.value)" class="bg-navy-850 border border-slate-700 rounded-lg px-2 py-1 text-slate-200 text-[11px] w-full focus:outline-none">
+            <option value="">ডিফল্ট পেছনের ক্যামেরা</option>
+          </select>
+        </div>
+        <label class="flex items-center gap-1.5 cursor-pointer text-[11px] text-slate-300 shrink-0">
+          <input type="checkbox" id="scannerContinuousToggle" checked onchange="window.app.toggleContinuousScan(this.checked)" class="rounded text-emerald-600 focus:ring-0" />
+          <span>পরপর স্ক্যান</span>
+        </label>
+      </div>
+
+      <!-- Camera Viewport with laser guide -->
+      <div class="relative w-full rounded-2xl overflow-hidden bg-black border border-slate-800">
+        <div id="barcodeReaderArea" class="w-full min-h-[260px]"></div>
+        <!-- Laser scanner bar -->
+        <div class="scanner-laser pointer-events-none"></div>
+        <!-- Center Target Box Overlay -->
+        <div class="absolute inset-0 pointer-events-none flex items-center justify-center p-6">
+          <div class="w-64 h-36 border-2 border-dashed border-emerald-400/70 rounded-xl relative">
+            <span class="absolute -top-1 -left-1 w-3 h-3 border-t-2 border-l-2 border-emerald-400"></span>
+            <span class="absolute -top-1 -right-1 w-3 h-3 border-t-2 border-r-2 border-emerald-400"></span>
+            <span class="absolute -bottom-1 -left-1 w-3 h-3 border-b-2 border-l-2 border-emerald-400"></span>
+            <span class="absolute -bottom-1 -right-1 w-3 h-3 border-b-2 border-r-2 border-emerald-400"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Last Scan Feedback Box -->
+      <div id="scannerScanResult" class="mt-3 hidden"></div>
+
+      <!-- Manual Code Entry Helper -->
+      <div class="mt-3 pt-3 border-t border-slate-800 flex items-center gap-2">
+        <input type="text" id="manualBarcodeInput" placeholder="বারকোড হাত দিয়ে লিখতে চান?" class="flex-1 bg-navy-850 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500" />
+        <button onclick="window.app.handleManualBarcodeSubmit()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow">
+          যোগ করুন
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= FAST CAMERA PRODUCT STACKER / SCANNER MODAL ================= -->
+  <div id="fastProductAddModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/90 backdrop-blur-md">
+    <div class="w-full max-w-4xl bg-navy-900 border border-slate-700 rounded-3xl shadow-2xl p-5 relative max-h-[95vh] overflow-y-auto">
+      <!-- Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div>
+          <h3 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+            <i data-lucide="zap" class="w-5 h-5 text-yellow-300"></i>
+            <span>ক্যামেরায় সুপার ফাস্ট পণ্য এন্ট্রি ও স্টক ইন (Fast Stacker)</span>
+          </h3>
+          <p class="text-xs text-slate-400">বারকোড স্ক্যান করে নিমেষেই নতুন পণ্য যোগ করুন অথবা এক ক্লিকে স্টক বাড়ান</p>
+        </div>
+        <button onclick="window.app.closeFastProductAddModal()" class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Main Content Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 my-4">
+        <!-- Left: Camera Viewport (5 cols) -->
+        <div class="lg:col-span-5 space-y-3">
+          <div class="flex items-center justify-between gap-2 text-xs">
+            <div class="flex items-center gap-1.5 flex-1">
+              <i data-lucide="video" class="w-3.5 h-3.5 text-slate-400"></i>
+              <select id="fastCameraSelect" onchange="window.app.startFastCameraScanner(this.value)" class="bg-navy-850 border border-slate-700 rounded-lg px-2 py-1 text-slate-200 text-[11px] w-full focus:outline-none">
+                <option value="">ডিফল্ট পেছনের ক্যামেরা</option>
+              </select>
+            </div>
+            <span class="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">লাইভ স্ক্যান</span>
+          </div>
+
+          <!-- Camera Viewport Box -->
+          <div class="relative w-full rounded-2xl overflow-hidden bg-black border border-slate-800">
+            <div id="fastBarcodeReaderArea" class="w-full min-h-[240px]"></div>
+            <div class="scanner-laser pointer-events-none"></div>
+            <div class="absolute inset-0 pointer-events-none flex items-center justify-center p-4">
+              <div class="w-56 h-32 border-2 border-dashed border-emerald-400/70 rounded-xl relative">
+                <span class="absolute -top-1 -left-1 w-3 h-3 border-t-2 border-l-2 border-emerald-400"></span>
+                <span class="absolute -top-1 -right-1 w-3 h-3 border-t-2 border-r-2 border-emerald-400"></span>
+                <span class="absolute -bottom-1 -left-1 w-3 h-3 border-b-2 border-l-2 border-emerald-400"></span>
+                <span class="absolute -bottom-1 -right-1 w-3 h-3 border-b-2 border-r-2 border-emerald-400"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Manual Barcode Search Fallback -->
+          <div class="flex items-center gap-2">
+            <input type="text" id="fastManualBarcodeInput" placeholder="বারকোড হাত দিয়ে টাইপ করুন..." class="flex-1 bg-navy-850 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500" />
+            <button type="button" onclick="window.app.handleFastManualBarcodeSubmit()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow shrink-0">
+              চেক করুন
+            </button>
+          </div>
+        </div>
+
+        <!-- Right: Dynamic Intake Card (7 cols) -->
+        <div class="lg:col-span-7 bg-navy-850 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
+          <!-- State 1: Awaiting Scan -->
+          <div id="fastIntakeEmptyState" class="py-12 text-center text-slate-400 space-y-2">
+            <i data-lucide="scan-barcode" class="w-12 h-12 mx-auto text-slate-500 animate-bounce"></i>
+            <h4 class="font-bold text-slate-200 text-sm">পণ্যের বারকোড ক্যামেরার সামনে ধরুন</h4>
+            <p class="text-xs text-slate-500 max-w-xs mx-auto">নতুন পণ্য হলে স্বয়ংক্রিয় এন্ট্রি ফর্ম আসবে, আর আগের পণ্য হলে সরাসরি স্টক বাড়ানোর অপশন পাবেন।</p>
+          </div>
+
+          <!-- State 2: New Product Fast Intake Form -->
+          <form id="fastIntakeNewForm" onsubmit="window.app.saveFastNewProduct(event)" class="hidden space-y-2.5 text-xs">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-700/80">
+              <span class="text-emerald-400 font-bold flex items-center gap-1.5">
+                <i data-lucide="sparkles" class="w-4 h-4 text-yellow-400"></i> নতুন বারকোড সনাক্ত!
+              </span>
+              <span class="font-mono text-xs font-bold text-slate-200 bg-slate-800 px-2 py-0.5 rounded border border-slate-700" id="fastNewCodeBadge">BARCODE-123</span>
+            </div>
+
+            <div>
+              <label class="block text-slate-300 font-semibold mb-1">পণ্যের নাম (Product Name) * :</label>
+              <input type="text" id="fastProdName" required placeholder="যেমন: হরলিক্স ৫০০ গ্রাম জার" class="w-full bg-navy-900 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 font-medium focus:border-blue-500 focus:outline-none" />
+            </div>
+
+            <!-- Quick Category Pill Chips -->
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="text-slate-400 text-[11px]">ক্যাটাগরি বাছুন (১-ক্লিক):</label>
+                <input type="text" id="fastProdCategory" placeholder="অন্যান্য..." class="bg-navy-900 border border-slate-700 rounded px-2 py-0.5 text-[11px] text-slate-200 w-28 focus:outline-none" />
+              </div>
+              <div class="flex flex-wrap gap-1">
+                <button type="button" onclick="window.app.setFastCategory('মুদি ও খাদ্য')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-medium border border-slate-700">মুদি ও খাদ্য</button>
+                <button type="button" onclick="window.app.setFastCategory('তেল ও মসলা')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-medium border border-slate-700">তেল ও মসলা</button>
+                <button type="button" onclick="window.app.setFastCategory('স্ন্যাক্স ও পানীয়')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-medium border border-slate-700">স্ন্যাক্স</button>
+                <button type="button" onclick="window.app.setFastCategory('কসমেটিকস')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-medium border border-slate-700">কসমেটিকস</button>
+                <button type="button" onclick="window.app.setFastCategory('স্টেশনারি')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-medium border border-slate-700">স্টেশনারি</button>
+                <button type="button" onclick="window.app.setFastCategory('ঔষধ')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-medium border border-slate-700">ফার্মেসি</button>
+              </div>
+            </div>
+
+            <!-- Price & Cost & Stock in compact 3 cols -->
+            <div class="grid grid-cols-3 gap-2">
+              <div>
+                <label class="block text-slate-400 text-[10px] mb-0.5">ক্রয়মূল্য (৳):</label>
+                <input type="number" id="fastProdCost" required min="0" step="0.5" placeholder="0" class="w-full bg-navy-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 num focus:border-blue-500 focus:outline-none" />
+              </div>
+              <div>
+                <label class="block text-slate-400 text-[10px] mb-0.5">বিক্রয়মূল্য (৳) * :</label>
+                <input type="number" id="fastProdPrice" required min="0" step="0.5" placeholder="0" class="w-full bg-navy-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-emerald-400 font-bold num focus:border-blue-500 focus:outline-none" />
+              </div>
+              <div>
+                <label class="block text-slate-400 text-[10px] mb-0.5">স্টক (পরিমাণ) * :</label>
+                <input type="number" id="fastProdStock" required min="1" step="1" value="10" class="w-full bg-navy-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 font-bold num focus:border-blue-500 focus:outline-none" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-slate-400 text-[10px] mb-0.5">একক (Unit):</label>
+                <select id="fastProdUnit" class="w-full bg-navy-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-200">
+                  <option value="পিস (Pcs)">পিস (Pcs)</option>
+                  <option value="কেজি (Kg)">কেজি (Kg)</option>
+                  <option value="প্যাকেট (Pkt)">প্যাকেট (Pkt)</option>
+                  <option value="লিটার (Ltr)">লিটার (Ltr)</option>
+                  <option value="ডজন (Dzn)">ডজন (Dzn)</option>
+                  <option value="বাক্স (Box)">বাক্স (Box)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-slate-400 text-[10px] mb-0.5">মহাজন / সাপ্লায়ার (ঐচ্ছিক):</label>
+                <input type="text" id="fastProdSupplier" placeholder="যেমন: মেঘনা গ্রুপ" class="w-full bg-navy-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-100 focus:outline-none" />
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" id="btnFastSaveNew" class="w-full mt-2 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs rounded-xl shadow-lg flex items-center justify-center gap-2 transition">
+              <i data-lucide="check-circle" class="w-4 h-4"></i>
+              <span>সংরক্ষণ করুন ও পরবর্তী পণ্য স্ক্যান করুন (Enter)</span>
+            </button>
+          </form>
+
+          <!-- State 3: Existing Product Quick Restock Card -->
+          <div id="fastIntakeExistingCard" class="hidden space-y-3 text-xs">
+            <div class="p-3 rounded-xl bg-cyan-950/60 border border-cyan-500/40 space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-cyan-300 flex items-center gap-1.5">
+                  <i data-lucide="check-circle-2" class="w-4 h-4 text-cyan-400"></i> পণ্যটি পূর্বে নিবন্ধিত
+                </span>
+                <span id="fastExistSku" class="font-mono text-[11px] text-cyan-200 bg-slate-900 px-2 py-0.5 rounded">CODE</span>
+              </div>
+              <h4 id="fastExistName" class="text-sm font-extrabold text-white">পণ্যের নাম</h4>
+              <div class="flex items-center gap-3 text-slate-300 text-[11px] pt-1">
+                <span>বিক্রয়মূল্য: <strong class="text-emerald-400 num">৳ <span id="fastExistPrice">0</span></strong></span>
+                <span>বর্তমান স্টক: <strong class="text-amber-400 num"><span id="fastExistStock">0</span> <span id="fastExistUnit">পিস</span></strong></span>
+              </div>
+            </div>
+
+            <!-- Quick Restock increment buttons -->
+            <div>
+              <label class="block text-slate-300 font-semibold mb-1.5">দ্রুত নতুন স্টক যোগ করুন (Quick Increment):</label>
+              <div class="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                <button type="button" onclick="window.app.quickIncrementStockFromFastScanner(1)" class="py-2 rounded-xl bg-slate-800 hover:bg-emerald-600 text-slate-200 hover:text-white font-bold text-xs border border-slate-700 transition num">+১ পিস</button>
+                <button type="button" onclick="window.app.quickIncrementStockFromFastScanner(5)" class="py-2 rounded-xl bg-slate-800 hover:bg-emerald-600 text-slate-200 hover:text-white font-bold text-xs border border-slate-700 transition num">+৫ পিস</button>
+                <button type="button" onclick="window.app.quickIncrementStockFromFastScanner(10)" class="py-2 rounded-xl bg-slate-800 hover:bg-emerald-600 text-slate-200 hover:text-white font-bold text-xs border border-slate-700 transition num">+১০ পিস</button>
+                <button type="button" onclick="window.app.quickIncrementStockFromFastScanner(12)" class="py-2 rounded-xl bg-slate-800 hover:bg-emerald-600 text-slate-200 hover:text-white font-bold text-xs border border-slate-700 transition num">+১ ডজন</button>
+                <button type="button" onclick="window.app.quickIncrementStockFromFastScanner(24)" class="py-2 rounded-xl bg-slate-800 hover:bg-emerald-600 text-slate-200 hover:text-white font-bold text-xs border border-slate-700 transition num">+২ ডজন</button>
+                <button type="button" onclick="window.app.quickIncrementStockFromFastScanner(50)" class="py-2 rounded-xl bg-slate-800 hover:bg-emerald-600 text-slate-200 hover:text-white font-bold text-xs border border-slate-700 transition num">+৫০ পিস</button>
+              </div>
+            </div>
+
+            <!-- Custom Qty Input -->
+            <div class="flex items-center gap-2 pt-2 border-t border-slate-800">
+              <input type="number" id="fastExistCustomQty" min="1" step="1" placeholder="নির্দিষ্ট পরিমাণ..." class="flex-1 bg-navy-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white num focus:outline-none" />
+              <button type="button" onclick="window.app.applyCustomIncrementFromFastScanner()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow shrink-0">
+                স্টক বাড়ান
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Session Activity Log -->
+      <div class="pt-3 border-t border-slate-800">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+            <i data-lucide="history" class="w-3.5 h-3.5 text-cyan-400"></i>
+            <span>এই সেশনে যুক্ত ও রিস্টক করা পণ্যসমূহ (Session Activity):</span>
+          </span>
+          <span id="fastSessionCountBadge" class="text-[10px] text-cyan-300 font-bold bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-500/30">০ টি সম্পন্ন</span>
+        </div>
+        <div id="fastSessionLog" class="max-h-32 overflow-y-auto space-y-1.5 text-xs pr-1">
+          <p class="text-slate-500 text-center py-2 text-[11px]">এখনো কোনো পণ্য স্ক্যান করে যুক্ত করা হয়নি।</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= BARCODE STICKER LABEL PRINTER MODAL ================= -->
+  <div id="barcodePrinterModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md">
+    <div class="w-full max-w-2xl bg-navy-900 border border-slate-700 rounded-3xl shadow-2xl p-5 relative max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800 no-print">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <i data-lucide="tag" class="w-4 h-4 text-amber-400"></i>
+          <span>বারকোড ও প্রাইস স্টিকার জেনারেটর (Barcode Label Printer)</span>
+        </h3>
+        <button onclick="window.app.closeModal('barcodePrinterModal')" class="text-slate-400 hover:text-white p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Controls -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 my-4 text-xs no-print">
+        <div>
+          <label class="block text-slate-400 mb-1">পণ্য নির্বাচন করুন:</label>
+          <select id="barcodePrintProductSelect" onchange="window.app.updateBarcodePrintPreview()" class="w-full bg-navy-850 border border-slate-700 rounded-xl p-2 text-slate-100">
+          </select>
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">স্টিকার সংখ্যা (Copies):</label>
+          <input type="number" id="barcodePrintQty" min="1" max="60" value="12" oninput="window.app.updateBarcodePrintPreview()" class="w-full bg-navy-850 border border-slate-700 rounded-xl p-2 text-slate-100 num" />
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">প্রিন্টার / সাইজ ফরম্যাট:</label>
+          <select id="barcodePrintLayout" onchange="window.app.updateBarcodePrintPreview()" class="w-full bg-navy-850 border border-slate-700 rounded-xl p-2 text-slate-100">
+            <option value="thermal">থার্মাল স্টিকার রোল (50mm x 30mm)</option>
+            <option value="a4">A4 স্টিকার শিট (২৪ টি স্টিকার)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Live Preview -->
+      <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 max-h-72 overflow-y-auto no-print">
+        <p class="text-[11px] text-slate-400 mb-2 font-medium">প্রিভিউ (Stickers Preview):</p>
+        <div id="barcodePreviewGrid" class="flex flex-wrap gap-2 justify-center">
+          <!-- stickers rendered here -->
+        </div>
+      </div>
+
+      <!-- Hidden Print Container for Clean CSS Media Print -->
+      <div id="printableBarcodeSheet" class="hidden flex-wrap gap-2 justify-center">
+        <!-- populated dynamically when printing -->
+      </div>
+
+      <!-- Actions -->
+      <div class="mt-4 pt-3 border-t border-slate-800 flex justify-end gap-2 no-print">
+        <button onclick="window.app.closeModal('barcodePrinterModal')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs">বাতিল</button>
+        <button onclick="window.app.printBarcodeLabels()" class="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-lg">
+          <i data-lucide="printer" class="w-4 h-4"></i>
+          <span>স্টিকার প্রিন্ট করুন (Print Labels)</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= DAILY CASH REGISTER MODAL (ক্যাশ ড্রয়ার হিসাব) ================= -->
+  <div id="cashRegisterModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md">
+    <div class="w-full max-w-md bg-navy-900 border border-slate-700 rounded-3xl shadow-2xl p-5 relative">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <i data-lucide="wallet" class="w-4 h-4 text-blue-400"></i>
+          <span>দৈনিক ক্যাশ ড্রয়ার হিসাব (Cash Drawer Register)</span>
+        </h3>
+        <button onclick="window.app.closeModal('cashRegisterModal')" class="text-slate-400 hover:text-white p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="my-4 space-y-3 text-xs">
+        <!-- Morning Opening Cash -->
+        <div>
+          <label class="block text-slate-300 font-medium mb-1">সকালের প্রারম্ভিক ক্যাশ (Opening Balance ৳):</label>
+          <div class="flex gap-2">
+            <input type="number" id="regOpeningCash" min="0" value="0" class="flex-1 bg-navy-850 border border-slate-700 rounded-xl p-2.5 text-slate-100 font-bold num" />
+            <button onclick="window.app.saveCashRegisterOpening()" class="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shrink-0">
+              সেভ করুন
+            </button>
+          </div>
+        </div>
+
+        <!-- Cash Calculations summary -->
+        <div class="p-3 rounded-2xl bg-navy-850 border border-slate-800 space-y-1.5 text-slate-300">
+          <div class="flex justify-between">
+            <span>আজকের মোট নগদ বিক্রি (Cash Sales):</span>
+            <span class="text-emerald-400 font-bold num">৳ <span id="regTodaySales">0.00</span></span>
+          </div>
+          <div class="flex justify-between">
+            <span>আজকের নগদ খরচ (Cash Expenses):</span>
+            <span class="text-rose-400 font-bold num">- ৳ <span id="regTodayExpenses">0.00</span></span>
+          </div>
+          <div class="pt-2 border-t border-slate-700 flex justify-between font-bold text-white text-sm">
+            <span>ড্রয়ারে নগদ ক্যাশ থাকা উচিত:</span>
+            <span class="text-blue-400 num">৳ <span id="regExpectedCash">0.00</span></span>
+          </div>
+        </div>
+
+        <!-- Physical Cash Drawer Count -->
+        <div>
+          <label class="block text-slate-300 font-medium mb-1">বর্তমানে ড্রয়ারে গণনা করা ক্যাশ (Actual Cash Counted ৳):</label>
+          <input type="number" id="regActualCash" placeholder="হাতেনাতে গুনে মোট টাকা লিখুন" oninput="window.app.calculateCashRegisterClosing()" class="w-full bg-navy-850 border border-slate-700 rounded-xl p-2.5 text-slate-100 font-bold text-amber-300 num" />
+        </div>
+
+        <!-- Discrepancy indicator -->
+        <div id="regDiscrepancyNotice" class="hidden p-3 rounded-xl bg-slate-800 text-xs">
+          <p id="regDiscrepancyText" class="font-bold"></p>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-slate-800 flex justify-end">
+        <button onclick="window.app.closeModal('cashRegisterModal')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold">
+          বন্ধ করুন
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= SMART RE-ORDER SHEET MODAL ================= -->
+  <div id="reorderModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md">
+    <div class="w-full max-w-lg bg-navy-900 border border-slate-700 rounded-3xl shadow-2xl p-5 relative max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <i data-lucide="clipboard-list" class="w-4 h-4 text-cyan-400"></i>
+          <span>স্মার্ট রি-অর্ডার ও ক্রয় তালিকা (Smart Re-order Sheet)</span>
+        </h3>
+        <button onclick="window.app.closeModal('reorderModal')" class="text-slate-400 hover:text-white p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-400 my-2">কম স্টকে পৌঁছানো পণ্যের তালিকা। এক ক্লিকে মহাজনের কাছে পাঠানোর উপযোগী অর্ডার তালিকা কপি করুন।</p>
+
+      <div id="reorderListContainer" class="my-3 space-y-2 max-h-72 overflow-y-auto pr-1">
+        <!-- items rendered here -->
+      </div>
+
+      <div class="mt-4 pt-3 border-t border-slate-800 flex justify-between items-center gap-2">
+        <button onclick="window.app.copyReorderList()" class="px-4 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow">
+          <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+          <span>অর্ডার তালিকা কপি করুন (WhatsApp/SMS)</span>
+        </button>
+        <button onclick="window.app.closeModal('reorderModal')" class="px-3 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs">
+          বন্ধ করুন
+        </button>
       </div>
     </div>
   </div>
@@ -1873,7 +2441,18 @@
       posCart: [],
       activeView: 'dashboard',
       chartInstance: null,
-      unsubscribers: []
+      unsubscribers: [],
+      currentInvoice: null,
+      scannerInstance: null,
+      lastScannedCode: '',
+      lastScanTime: 0,
+      isContinuousScan: true,
+      scannerTarget: 'pos', // 'pos' | 'productAdd'
+      lastCustomerModalSource: null, // 'pos' | 'view'
+      fastStackerSession: [],
+      fastCurrentScannedCode: null,
+      fastCurrentExistingProduct: null,
+      fastScannerInstance: null
     };
 
     // UI Helper: Toast Notifications
@@ -1903,6 +2482,11 @@
 
     // Modal Manager
     function openModal(id) {
+      if (state.isExpired && ['addProductModal', 'fastProductAddModal', 'addExpenseModal', 'addCustomerModal', 'addSupplierModal', 'stockAdjustModal', 'barcodeScannerModal'].includes(id)) {
+        showToast('আপনার ট্রায়ালের মেয়াদ শেষ হয়েছে! এই ফিচার ব্যবহার করতে অনুগ্রহ করে প্রিমিয়াম প্ল্যানে আপগ্রেড করুন।', 'error');
+        switchView('subscription');
+        return;
+      }
       document.getElementById(id)?.classList.remove('hidden');
       lucide.createIcons();
     }
@@ -1912,6 +2496,11 @@
 
     // View Navigation
     function switchView(viewName) {
+      if (state.isExpired && viewName === 'pos') {
+        showToast('আপনার ট্রায়ালের মেয়াদ শেষ হয়েছে! নতুন বিক্রি করতে অনুগ্রহ করে বিকাশ বা নগদে প্রিমিয়াম প্ল্যান সক্রিয় করুন।', 'error');
+        viewName = 'subscription';
+      }
+
       const views = [
         'dashboard', 'pos', 'products', 'sales-history', 
         'customers', 'expenses', 'suppliers', 'reports', 
@@ -2064,6 +2653,54 @@
         renderUserPaymentRequests();
       }, (err) => console.warn("Payments sync note:", err.message));
       state.unsubscribers.push(unsubPay);
+
+      // 8. App Settings listener: Live sync for dynamic plan prices & official payment numbers set by Admin
+      const settingsRef = doc(db, 'appSettings', 'subscriptionPlans');
+      const unsubSettings = onSnapshot(settingsRef, (snap) => {
+        if (snap.exists()) {
+          applyDynamicPlanPricing(snap.data());
+        }
+      }, (err) => console.warn("Plan settings listener note:", err.message));
+      state.unsubscribers.push(unsubSettings);
+    }
+
+    // Apply live dynamic pricing set by Super Admin
+    function applyDynamicPlanPricing(cfg) {
+      if (!cfg) return;
+      state.appConfig = cfg;
+
+      const p1 = Number(cfg.price1Month || 499);
+      const p6 = Number(cfg.price6Month || 2499);
+      const p12 = Number(cfg.price1Year || 4990);
+
+      // 1. Update Premium plan card display
+      const cardPrice = document.getElementById('premCardPrice');
+      if (cardPrice) cardPrice.textContent = `৳ ${p1}`;
+      const cardYearPrice = document.getElementById('premCardYearPrice');
+      if (cardYearPrice) cardYearPrice.textContent = `অথবা বাৎসরিক মাত্র ৳ ${p12.toLocaleString()} (ডিসকাউন্ট)`;
+
+      // 2. Update payment form select options with dynamic prices
+      const select = document.getElementById('payPlanPackage');
+      if (select) {
+        const curVal = select.value;
+        select.innerHTML = `
+          <option value="1_month" data-amount="${p1}">১ মাস (30 Days) — ৳ ${p1}</option>
+          <option value="6_months" data-amount="${p6}">৬ মাস (180 Days) — ৳ ${p6.toLocaleString()}</option>
+          <option value="1_year" data-amount="${p12}">১ বছর (365 Days) — ৳ ${p12.toLocaleString()}</option>
+        `;
+        select.value = curVal || '1_month';
+        updatePayAmountByPackage();
+      }
+
+      // 3. Update official bKash & Nagad numbers if configured
+      if (cfg.bkashNumber) {
+        const b = document.getElementById('numBkash');
+        if (b) b.textContent = cfg.bkashNumber;
+      }
+      if (cfg.nagadNumber) {
+        const n = document.getElementById('numNagad');
+        if (n) n.textContent = cfg.nagadNumber;
+      }
     }
 
     // ================= SUBSCRIPTION CHECK & UI =================
@@ -2073,48 +2710,82 @@
 
       const now = new Date();
       let isPremium = false;
-      let planText = 'ফ্রি প্ল্যান';
-      let expiryText = 'আজীবন';
+      let isTrialActive = false;
+      let isExpired = false;
+      let planText = 'ফ্রি ট্রায়াল';
+      let expiryText = 'মেয়াদ শেষ';
 
-      if (p.plan === 'premium') {
+      if (p.status === 'suspended') {
+        isExpired = true;
+        planText = 'অ্যাকাউন্ট স্থগিত';
+        expiryText = 'স্থগিত (Suspended)';
+      } else if (p.plan === 'premium') {
         const expDate = p.premiumExpiresAt ? new Date(p.premiumExpiresAt) : null;
         if (expDate && expDate > now) {
           isPremium = true;
           const diffDays = Math.ceil((expDate - now) / (1000 * 60 * 60 * 24));
           planText = 'প্রিমিয়াম প্ল্যান';
-          expiryText = `${diffDays} দিন বাকি (${expDate.toLocaleDateString()})`;
+          expiryText = `${diffDays} দিন বাকি (${expDate.toLocaleDateString('bn-BD')})`;
         } else {
+          isExpired = true;
           planText = 'প্রিমিয়াম মেয়াদ শেষ';
-          expiryText = 'রিনিউ প্রয়োজন';
+          expiryText = 'রিনিউ প্রয়োজন (Locked)';
         }
       } else if (p.trialEndsAt) {
         const trialEnd = new Date(p.trialEndsAt);
         if (trialEnd > now) {
+          isTrialActive = true;
           const diffDays = Math.ceil((trialEnd - now) / (1000 * 60 * 60 * 24));
-          planText = 'ফ্রি ট্রায়াল';
+          planText = 'ফ্রি ট্রায়াল সক্রিয়';
           expiryText = `${diffDays} দিন বাকি`;
-          isPremium = true; // Full features active during trial
         } else {
-          planText = 'ট্রায়াল শেষ (ফ্রি মোড)';
-          expiryText = 'পণ্য সীমা ৫০ টি';
+          // Trial expired and user did not buy premium -> Lock the account
+          isExpired = true;
+          planText = 'ট্রায়াল মেয়াদ শেষ';
+          expiryText = 'প্রিমিয়াম আবশ্যক (Locked)';
         }
+      } else {
+        isExpired = true;
+        planText = 'মেয়াদ শেষ (লক্ড)';
+        expiryText = 'প্রিমিয়াম আবশ্যক';
       }
 
+      state.isAccountActive = (isPremium || isTrialActive) && p.status !== 'suspended';
+      state.isExpired = isExpired;
+
       // Update badges
-      document.getElementById('headerPlanBadge').textContent = planText;
-      document.getElementById('headerPlanBadge').classList.remove('hidden');
+      const headerBadge = document.getElementById('headerPlanBadge');
+      headerBadge.textContent = planText;
+      headerBadge.classList.remove('hidden');
+      if (isExpired) {
+        headerBadge.className = 'text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 badge-pulse';
+      } else if (isPremium) {
+        headerBadge.className = 'text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40';
+      } else {
+        headerBadge.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+      }
+
       document.getElementById('sidePlanName').textContent = planText;
       document.getElementById('sidePlanExpiry').textContent = `মেয়াদ: ${expiryText}`;
       document.getElementById('subCurrentPlanBadge').textContent = planText;
       document.getElementById('subExpiryNotice').textContent = `প্ল্যান স্ট্যাটাস: ${expiryText}`;
-      document.getElementById('subProductLimitNotice').textContent = isPremium ? 'আনলিমিটেড পণ্য (Unlimited)' : 'সর্বোচ্চ ৫০ টি পণ্য (Free Limit)';
+      document.getElementById('subProductLimitNotice').textContent = isPremium ? 'আনলিমিটেড পণ্য (Unlimited)' : 'ফ্রি ট্রায়াল মেয়াদকালীন সম্পূর্ণ ফিচার';
 
-      // Check account suspension
+      // Alert Banner
+      const alertBanner = document.getElementById('statusAlertBanner');
+      const alertTitle = document.getElementById('statusAlertTitle');
+      const alertText = document.getElementById('statusAlertText');
+
       if (p.status === 'suspended') {
-        document.getElementById('statusAlertBanner').classList.remove('hidden');
-        document.getElementById('statusAlertText').textContent = 'আপনার অ্যাকাউন্টটি সাময়িকভাবে স্থগিত (Suspended) রয়েছে। সহায়তার জন্য সুপার অ্যাডমিনের সাথে যোগাযোগ করুন।';
+        alertBanner.classList.remove('hidden');
+        if (alertTitle) alertTitle.textContent = 'আপনার অ্যাকাউন্টটি স্থগিত করা হয়েছে!';
+        if (alertText) alertText.textContent = 'সহায়তা ও বিস্তারিত জানতে সুপার অ্যাডমিনের সাথে যোগাযোগ করুন।';
+      } else if (isExpired) {
+        alertBanner.classList.remove('hidden');
+        if (alertTitle) alertTitle.textContent = 'আপনার ফ্রি ট্রায়ালের মেয়াদ শেষ হয়েছে!';
+        if (alertText) alertText.textContent = 'দোকানের নতুন বিক্রি, পণ্য যোগ ও স্টক ব্যবস্থাপনা সচল রাখতে অনুগ্রহ করে নিচে বিকাশ বা নগদে পেমেন্ট করে প্রিমিয়াম প্ল্যানে আপগ্রেড করুন।';
       } else {
-        document.getElementById('statusAlertBanner').classList.add('hidden');
+        alertBanner.classList.add('hidden');
       }
     }
 
@@ -2320,8 +2991,109 @@
       if (!sel) return;
       const curr = sel.value;
       sel.innerHTML = '<option value="">সাধারণ নগদ ক্রেতা (Walk-in Customer)</option>' + 
-        state.customers.map(c => `<option value="${c.id}">${c.name} (${c.phone}) - বাকি: ৳${c.totalDue || 0}</option>`).join('');
+        state.customers.map(c => `<option value="${c.id}">${c.name} (${c.phone || 'ফোন নেই'}) - পূর্বের বাকি: ৳${formatBDT(c.totalDue || 0)}</option>`).join('');
       sel.value = curr;
+      onPosCustomerChange();
+    }
+
+    function onPosCustomerChange() {
+      const sel = document.getElementById('posCustomerId');
+      const custId = sel ? sel.value : '';
+      const card = document.getElementById('posCustomerDueCard');
+      const missingAlert = document.getElementById('posMissingCustomerAlert');
+      const custNameEl = document.getElementById('posCustSelectedName');
+      const custPhoneEl = document.getElementById('posCustSelectedPhone');
+      const prevDueEl = document.getElementById('posCustPreviousDue');
+      const totalDueEl = document.getElementById('posCustTotalDueAfter');
+
+      if (!custId) {
+        if (card) card.classList.add('hidden');
+        calculatePosTotals();
+        return;
+      }
+
+      const customer = state.customers.find(c => c.id === custId);
+      if (!customer) {
+        if (card) card.classList.add('hidden');
+        return;
+      }
+
+      if (card) card.classList.remove('hidden');
+      if (missingAlert) missingAlert.classList.add('hidden');
+      if (custNameEl) custNameEl.textContent = customer.name;
+      if (custPhoneEl) custPhoneEl.textContent = customer.phone || 'ফোন নেই';
+
+      const prevDue = Number(customer.totalDue || 0);
+      if (prevDueEl) prevDueEl.textContent = formatBDT(prevDue);
+
+      const subtotal = state.posCart.reduce((sum, i) => sum + i.subtotal, 0);
+      const discount = Math.max(0, parseFloat(document.getElementById('posDiscountInput')?.value || 0));
+      const taxPercent = Math.max(0, parseFloat(document.getElementById('posTaxInput')?.value || 0));
+      const afterDiscount = Math.max(0, subtotal - discount);
+      const grandTotal = afterDiscount + (afterDiscount * taxPercent) / 100;
+      const paid = Math.max(0, parseFloat(document.getElementById('posPaidAmount')?.value || 0));
+      const currentSaleDue = Math.max(0, grandTotal - paid);
+
+      if (totalDueEl) totalDueEl.textContent = formatBDT(prevDue + currentSaleDue);
+      lucide.createIcons();
+    }
+
+    function openQuickCustomerModalFromPos() {
+      state.lastCustomerModalSource = 'pos';
+      openModal('addCustomerModal');
+      const nameInput = document.getElementById('custName');
+      if (nameInput) setTimeout(() => nameInput.focus(), 150);
+    }
+
+    function sendCustomerDueWhatsAppFromPos() {
+      const custId = document.getElementById('posCustomerId')?.value;
+      if (!custId) {
+        showToast('কাস্টমার নির্বাচন করা নেই', 'error');
+        return;
+      }
+      sendCustomerDueWhatsApp(custId);
+    }
+
+    function onPosPaymentMethodChange() {
+      const method = document.getElementById('posPaymentMethod')?.value;
+      if (method === 'due') {
+        applyFullDueSale();
+      } else {
+        const subtotal = state.posCart.reduce((sum, i) => sum + i.subtotal, 0);
+        const discount = Math.max(0, parseFloat(document.getElementById('posDiscountInput')?.value || 0));
+        const taxPercent = Math.max(0, parseFloat(document.getElementById('posTaxInput')?.value || 0));
+        const grandTotal = Math.round((subtotal - discount) + ((subtotal - discount) * taxPercent) / 100);
+
+        const paidInput = document.getElementById('posPaidAmount');
+        if (paidInput && parseFloat(paidInput.value || 0) === 0 && grandTotal > 0) {
+          paidInput.value = grandTotal;
+          paidInput.dataset.manual = 'true';
+        }
+        calculatePosTotals();
+      }
+    }
+
+    function applyFullDueSale() {
+      const payMethod = document.getElementById('posPaymentMethod');
+      if (payMethod) payMethod.value = 'due';
+
+      const paidInput = document.getElementById('posPaidAmount');
+      if (paidInput) {
+        paidInput.value = 0;
+        paidInput.dataset.manual = 'true';
+      }
+
+      calculatePosTotals();
+
+      const custSelect = document.getElementById('posCustomerId');
+      if (!custSelect || !custSelect.value) {
+        const missingAlert = document.getElementById('posMissingCustomerAlert');
+        if (missingAlert) missingAlert.classList.remove('hidden');
+        custSelect?.focus();
+        showToast('বাকিতে বিক্রির জন্য কাস্টমার নির্বাচন করুন বা "+ নতুন কাস্টমার" যোগ করুন!', 'info');
+      } else {
+        showToast('সম্পূর্ণ বাকি নির্ধারণ করা হয়েছে (৳০ নগদ)', 'info');
+      }
     }
 
     function filterPosProducts() {
@@ -2380,6 +3152,7 @@
 
       if (!allowNegative && targetQty > currentStock) {
         showToast(`স্টকে পর্যাপ্ত মাল নেই! বর্তমান স্টক: ${currentStock} ${product.unit || ''}`, 'error');
+        playBeep('error');
         return;
       }
 
@@ -2400,6 +3173,7 @@
         });
       }
 
+      playBeep('scan');
       renderPosCart();
       calculatePosTotals();
     }
@@ -2417,6 +3191,7 @@
       const allowNegative = state.shopProfile?.allowNegativeStock === true;
       if (!allowNegative && qty > item.stock) {
         showToast(`স্টকে সর্বোচ্চ ${item.stock} টি আছে!`, 'error');
+        playBeep('error');
         item.quantity = item.stock;
       } else {
         item.quantity = qty;
@@ -2437,6 +3212,8 @@
       document.getElementById('posDiscountInput').value = 0;
       document.getElementById('posPaidAmount').value = 0;
       document.getElementById('posCustomerId').value = '';
+      const changeNotice = document.getElementById('posChangeNotice');
+      if (changeNotice) changeNotice.classList.add('hidden');
       renderPosCart();
       calculatePosTotals();
     }
@@ -2449,7 +3226,7 @@
       badge.textContent = `${state.posCart.reduce((sum, i) => sum + i.quantity, 0)} টি আইটেম`;
 
       if (state.posCart.length === 0) {
-        container.innerHTML = '<p class="text-slate-500 py-6 text-center text-xs">কার্ট খালি। বাম পাশ থেকে পণ্য নির্বাচন করুন।</p>';
+        container.innerHTML = '<p class="text-slate-500 py-6 text-center text-xs">কার্ট খালি। বাম পাশ থেকে পণ্য নির্বাচন বা বারকোড স্ক্যান করুন।</p>';
         return;
       }
 
@@ -2486,11 +3263,15 @@
       document.getElementById('posGrandTotal').textContent = formatBDT(grandTotal);
 
       const paidInput = document.getElementById('posPaidAmount');
-      // If user hasn't typed paid, set paid = grandTotal by default
-      if (paidInput.dataset.manual !== 'true') {
-        paidInput.value = Math.round(grandTotal);
+      if (paidInput && paidInput.dataset.manual !== 'true') {
+        const method = document.getElementById('posPaymentMethod')?.value;
+        if (method === 'due') {
+          paidInput.value = 0;
+        } else {
+          paidInput.value = Math.round(grandTotal);
+        }
       }
-      const paid = Math.max(0, parseFloat(paidInput.value || 0));
+      const paid = Math.max(0, parseFloat(paidInput?.value || 0));
       const due = Math.max(0, grandTotal - paid);
 
       const dueNotice = document.getElementById('posDueNotice');
@@ -2500,6 +3281,65 @@
       } else {
         dueNotice.classList.add('hidden');
       }
+
+      // Customer outstanding due sync in POS
+      const custId = document.getElementById('posCustomerId')?.value;
+      const missingAlert = document.getElementById('posMissingCustomerAlert');
+      const card = document.getElementById('posCustomerDueCard');
+      const totalDueEl = document.getElementById('posCustTotalDueAfter');
+
+      if (due > 0) {
+        if (!custId) {
+          if (missingAlert) missingAlert.classList.remove('hidden');
+          if (card) card.classList.add('hidden');
+        } else {
+          if (missingAlert) missingAlert.classList.add('hidden');
+          const cust = state.customers.find(c => c.id === custId);
+          if (cust && totalDueEl) {
+            totalDueEl.textContent = formatBDT(Number(cust.totalDue || 0) + due);
+          }
+        }
+      } else {
+        if (missingAlert) missingAlert.classList.add('hidden');
+        if (custId) {
+          const cust = state.customers.find(c => c.id === custId);
+          if (cust && totalDueEl) {
+            totalDueEl.textContent = formatBDT(cust.totalDue || 0);
+          }
+        }
+      }
+
+      // Return Change indicator (when paid > grandTotal)
+      const changeNotice = document.getElementById('posChangeNotice');
+      const changeAmount = document.getElementById('posChangeAmount');
+      if (paid > grandTotal && grandTotal > 0) {
+        if (changeNotice) changeNotice.classList.remove('hidden');
+        if (changeAmount) changeAmount.textContent = formatBDT(paid - grandTotal);
+      } else {
+        if (changeNotice) changeNotice.classList.add('hidden');
+      }
+    }
+
+    // Quick Cash Tender presets
+    function applyQuickCashTender(type, extra = 0) {
+      const subtotal = state.posCart.reduce((sum, i) => sum + i.subtotal, 0);
+      const discount = Math.max(0, parseFloat(document.getElementById('posDiscountInput')?.value || 0));
+      const taxPercent = Math.max(0, parseFloat(document.getElementById('posTaxInput')?.value || 0));
+      const afterDiscount = Math.max(0, subtotal - discount);
+      const grandTotal = Math.round(afterDiscount + (afterDiscount * taxPercent) / 100);
+
+      const paidInput = document.getElementById('posPaidAmount');
+      if (!paidInput) return;
+      paidInput.dataset.manual = 'true';
+
+      if (type === 'exact') {
+        paidInput.value = grandTotal;
+      } else if (type === 'set') {
+        paidInput.value = Number(extra);
+      } else if (type === 'add') {
+        paidInput.value = (parseFloat(paidInput.value || 0) + Number(extra));
+      }
+      calculatePosTotals();
     }
 
     // COMPLETE SALE (Atomic batch / transaction)
@@ -2507,6 +3347,11 @@
       if (!state.currentUser) {
         showToast('বিক্রয় করতে অনুগ্রহ করে লগইন করুন', 'error');
         openModal('authModal');
+        return;
+      }
+      if (state.isExpired) {
+        showToast('আপনার ট্রায়ালের মেয়াদ শেষ হয়েছে! বিক্রয় করতে অনুগ্রহ করে প্রিমিয়াম রিনিউ বা আপগ্রেড করুন।', 'error');
+        switchView('subscription');
         return;
       }
       if (state.posCart.length === 0) {
@@ -2526,7 +3371,15 @@
 
       // Customer validation for due
       if (dueAmount > 0 && !customerId) {
-        showToast('বাকি থাকলে অবশ্যই কাস্টমার নির্বাচন করতে হবে!', 'error');
+        playBeep('error');
+        showToast('বাকিতে পণ্য বিক্রি করতে কাস্টমার নির্বাচন আবশ্যক!', 'error');
+        const alertEl = document.getElementById('posMissingCustomerAlert');
+        if (alertEl) alertEl.classList.remove('hidden');
+        const wrapper = document.getElementById('posCustomerCardWrapper');
+        if (wrapper) {
+          wrapper.classList.add('ring-2', 'ring-rose-500');
+          setTimeout(() => wrapper.classList.remove('ring-2', 'ring-rose-500'), 2500);
+        }
         document.getElementById('posCustomerId').focus();
         return;
       }
@@ -2534,6 +3387,8 @@
       const customer = state.customers.find(c => c.id === customerId);
       const customerName = customer ? customer.name : 'নগদ ক্রেতা';
       const customerPhone = customer ? customer.phone : '';
+      const prevDue = customer ? Number(customer.totalDue || 0) : 0;
+      const newCustomerDue = prevDue + dueAmount;
 
       const btn = document.getElementById('btnCompleteSale');
       btn.disabled = true;
@@ -2551,6 +3406,8 @@
           customerId: customerId || null,
           customerName: customerName,
           customerPhone: customerPhone,
+          customerPreviousDue: prevDue,
+          customerTotalDueAfter: newCustomerDue,
           items: state.posCart.map(i => ({
             productId: i.productId,
             name: i.name,
@@ -2605,10 +3462,9 @@
         // 3. Update Customer Due Balance & Ledger if Due > 0
         if (customerId && customer) {
           const custRef = doc(db, 'customers', customerId);
-          const newDue = Number(customer.totalDue || 0) + dueAmount;
           const newPurchases = Number(customer.totalPurchases || 0) + grandTotal;
           batch.update(custRef, {
-            totalDue: newDue,
+            totalDue: newCustomerDue,
             totalPurchases: newPurchases
           });
 
@@ -2619,7 +3475,7 @@
               customerId: customerId,
               type: 'sale_due',
               amount: dueAmount,
-              balanceAfter: newDue,
+              balanceAfter: newCustomerDue,
               invoiceNo: invoiceNo,
               notes: `ইনভয়েস ${invoiceNo} এর বাকি`,
               createdAt: serverTimestamp()
@@ -2629,7 +3485,12 @@
 
         await batch.commit();
 
-        showToast(`বিক্রয় সম্পন্ন! ইনভয়েস: ${invoiceNo}`, 'success');
+        playBeep('success');
+        if (dueAmount > 0) {
+          showToast(`বাকিতে বিক্রয় সম্পন্ন! ইনভয়েস: ${invoiceNo} (নতুন মোট বাকি: ৳${formatBDT(newCustomerDue)})`, 'success');
+        } else {
+          showToast(`বিক্রয় সম্পন্ন! ইনভয়েস: ${invoiceNo}`, 'success');
+        }
         resetPosCart();
 
         // Show Invoice Modal
@@ -2657,6 +3518,7 @@
     }
 
     function viewInvoiceDirect(sale) {
+      state.currentInvoice = sale;
       const shop = state.shopProfile || {};
       document.getElementById('invShopName').textContent = shop.shopName || 'আমার দোকান';
       document.getElementById('invShopAddress').textContent = shop.address || 'ঠিকানা';
@@ -2690,8 +3552,29 @@
       document.getElementById('invGrandTotal').textContent = formatBDT(sale.grandTotal);
       document.getElementById('invPaid').textContent = formatBDT(sale.paidAmount);
       document.getElementById('invDue').textContent = formatBDT(sale.dueAmount);
-      document.getElementById('invPaymentMethod').textContent = sale.paymentMethod || 'নগদ';
+      document.getElementById('invPaymentMethod').textContent = sale.paymentMethod === 'due' ? 'বাকি' : (sale.paymentMethod || 'নগদ');
       document.getElementById('invFooterNote').textContent = shop.invoiceNote || 'ধন্যবাদ, আবার আসবেন!';
+
+      // Previous and Total Due in receipt
+      const prevDueRow = document.getElementById('invPrevDueRow');
+      const prevDueEl = document.getElementById('invPrevDue');
+      const totalDueRow = document.getElementById('invTotalDueRow');
+      const totalDueEl = document.getElementById('invTotalDue');
+
+      const prevDue = sale.customerPreviousDue !== undefined ? Number(sale.customerPreviousDue) : 0;
+      const totalDue = sale.customerTotalDueAfter !== undefined ? Number(sale.customerTotalDueAfter) : (prevDue + Number(sale.dueAmount || 0));
+
+      if (prevDueRow && prevDueEl && totalDueRow && totalDueEl) {
+        if (sale.customerId && (sale.dueAmount > 0 || prevDue > 0)) {
+          prevDueRow.classList.remove('hidden');
+          prevDueEl.textContent = formatBDT(prevDue);
+          totalDueRow.classList.remove('hidden');
+          totalDueEl.textContent = formatBDT(totalDue);
+        } else {
+          prevDueRow.classList.add('hidden');
+          totalDueRow.classList.add('hidden');
+        }
+      }
 
       openModal('invoiceModal');
     }
@@ -2748,6 +3631,9 @@
             <td class="py-3 px-3 text-right font-semibold text-slate-200 num">৳ ${formatBDT(totalVal)}</td>
             <td class="py-3 px-4 text-center">
               <div class="flex items-center justify-center gap-1.5">
+                <button onclick="window.app.openBarcodePrinterModal('${p.id}')" title="বারকোড স্টিকার প্রিন্ট" class="p-1.5 rounded-lg bg-navy-800 hover:bg-slate-700 text-amber-400">
+                  <i data-lucide="tag" class="w-3.5 h-3.5"></i>
+                </button>
                 <button onclick="window.app.openStockAdjust('${p.id}')" title="স্টক ইন/আউট" class="p-1.5 rounded-lg bg-navy-800 hover:bg-slate-700 text-blue-400">
                   <i data-lucide="shuffle" class="w-3.5 h-3.5"></i>
                 </button>
@@ -2768,6 +3654,12 @@
     async function handleSaveProduct(e) {
       e.preventDefault();
       if (!state.currentUser) return;
+      if (state.isExpired) {
+        showToast('আপনার ট্রায়ালের মেয়াদ শেষ হয়েছে! পণ্য যোগ বা এডিট করতে অনুগ্রহ করে প্রিমিয়াম প্ল্যানে আপগ্রেড করুন।', 'error');
+        closeModal('addProductModal');
+        switchView('subscription');
+        return;
+      }
       const shopId = state.currentUser.uid;
 
       // Check product limits for free users
@@ -2823,6 +3715,11 @@
     }
 
     function openEditProduct(productId) {
+      if (state.isExpired) {
+        showToast('আপনার ট্রায়ালের মেয়াদ শেষ হয়েছে! অনুগ্রহ করে প্রিমিয়াম প্ল্যানে আপগ্রেড করুন।', 'error');
+        switchView('subscription');
+        return;
+      }
       const p = state.products.find(item => item.id === productId);
       if (!p) return;
 
@@ -2845,6 +3742,11 @@
     }
 
     async function handleDeleteProduct(productId) {
+      if (state.isExpired) {
+        showToast('আপনার ট্রায়ালের মেয়াদ শেষ হয়েছে! অনুগ্রহ করে প্রিমিয়াম প্ল্যানে আপগ্রেড করুন।', 'error');
+        switchView('subscription');
+        return;
+      }
       if (!confirm('আপনি কি নিশ্চিত যে এই পণ্যটি মুছে ফেলতে চান?')) return;
       try {
         await deleteDoc(doc(db, 'products', productId));
@@ -2855,6 +3757,11 @@
     }
 
     function openStockAdjust(productId) {
+      if (state.isExpired) {
+        showToast('আপনার ট্রায়ালের মেয়াদ শেষ হয়েছে! স্টক সমন্বয় করতে অনুগ্রহ করে প্রিমিয়াম প্ল্যানে আপগ্রেড করুন।', 'error');
+        switchView('subscription');
+        return;
+      }
       const p = state.products.find(item => item.id === productId);
       if (!p) return;
       document.getElementById('adjProductId').value = p.id;
@@ -2865,6 +3772,12 @@
 
     async function handleSaveStockAdjustment(e) {
       e.preventDefault();
+      if (state.isExpired) {
+        showToast('আপনার ট্রায়ালের মেয়াদ শেষ হয়েছে! অনুগ্রহ করে প্রিমিয়াম প্ল্যানে আপগ্রেড করুন।', 'error');
+        closeModal('stockAdjustModal');
+        switchView('subscription');
+        return;
+      }
       const prodId = document.getElementById('adjProductId').value;
       const type = document.getElementById('adjType').value;
       const qty = parseInt(document.getElementById('adjQuantity').value || 1);
@@ -2933,6 +3846,11 @@
     }
 
     async function handleCsvProductImport(event) {
+      if (state.isExpired) {
+        showToast('আপনার ট্রায়ালের মেয়াদ শেষ হয়েছে! পণ্য আমদানি করতে অনুগ্রহ করে প্রিমিয়াম প্ল্যানে আপগ্রেড করুন।', 'error');
+        switchView('subscription');
+        return;
+      }
       const file = event.target.files[0];
       if (!file) return;
 
@@ -3097,10 +4015,13 @@
             <td class="py-3 px-3 text-right font-medium text-slate-200 num">৳ ${formatBDT(c.totalPurchases)}</td>
             <td class="py-3 px-3 text-right font-bold ${due > 0 ? 'text-amber-400' : 'text-slate-400'} num">৳ ${formatBDT(due)}</td>
             <td class="py-3 px-4 text-center">
-              <div class="flex items-center justify-center gap-2">
+              <div class="flex items-center justify-center gap-1.5 flex-wrap">
                 ${due > 0 ? `
-                  <button onclick="window.app.openCollectDueModal('${c.id}')" class="px-2.5 py-1 rounded-lg bg-emerald-600/30 text-emerald-400 hover:bg-emerald-600 hover:text-white font-semibold text-[11px] flex items-center gap-1 transition">
+                  <button onclick="window.app.openCollectDueModal('${c.id}')" class="px-2 py-1 rounded-lg bg-emerald-600/30 text-emerald-400 hover:bg-emerald-600 hover:text-white font-semibold text-[11px] flex items-center gap-1 transition">
                     <i data-lucide="hand-coins" class="w-3 h-3"></i> টাকা আদায়
+                  </button>
+                  <button onclick="window.app.sendCustomerDueWhatsApp('${c.id}')" title="হোয়াটসঅ্যাপে বাকি তাগাদা পাঠান" class="px-2 py-1 rounded-lg bg-emerald-950/60 text-emerald-300 hover:bg-emerald-700 hover:text-white font-semibold text-[11px] flex items-center gap-1 border border-emerald-600/40 transition">
+                    <i data-lucide="message-circle" class="w-3 h-3"></i> তাগাদা
                   </button>
                 ` : `
                   <span class="text-[10px] text-slate-500 font-medium">পরিশোধিত</span>
@@ -3115,6 +4036,12 @@
 
     async function handleSaveCustomer(e) {
       e.preventDefault();
+      if (state.isExpired) {
+        showToast('আপনার ট্রায়ালের মেয়াদ শেষ হয়েছে! কাস্টমার যোগ করতে অনুগ্রহ করে প্রিমিয়াম প্ল্যানে আপগ্রেড করুন।', 'error');
+        closeModal('addCustomerModal');
+        switchView('subscription');
+        return;
+      }
       const shopId = state.currentUser.uid;
       const name = document.getElementById('custName').value.trim();
       const phone = document.getElementById('custPhone').value.trim();
@@ -3141,7 +4068,28 @@
           });
         }
 
-        showToast('নতুন কাস্টমার যুক্ত হয়েছে', 'success');
+        if (state.lastCustomerModalSource === 'pos') {
+          // Immediately set customer in POS cart without losing items
+          const posSelect = document.getElementById('posCustomerId');
+          if (posSelect) {
+            const opt = document.createElement('option');
+            opt.value = docRef.id;
+            opt.textContent = `${name} (${phone || 'ফোন নেই'}) - পূর্বের বাকি: ৳${formatBDT(openingDue)}`;
+            posSelect.appendChild(opt);
+            posSelect.value = docRef.id;
+            onPosCustomerChange();
+          }
+          showToast(`"${name}" কাস্টমার হিসেবে যুক্ত হয়েছে এবং বিক্রয়ের জন্য নির্বাচিত!`, 'success');
+          state.lastCustomerModalSource = null;
+        } else {
+          showToast('নতুন কাস্টমার যুক্ত হয়েছে', 'success');
+        }
+
+        // Reset form
+        document.getElementById('custName').value = '';
+        document.getElementById('custPhone').value = '';
+        document.getElementById('custAddress').value = '';
+        document.getElementById('custOpeningDue').value = '0';
         closeModal('addCustomerModal');
       } catch (err) {
         showToast(`কাস্টমার সেভ করা যায়নি: ${err.message}`, 'error');
@@ -3149,6 +4097,11 @@
     }
 
     function openCollectDueModal(customerId) {
+      if (state.isExpired) {
+        showToast('আপনার ট্রায়ালের মেয়াদ শেষ হয়েছে! বাকি আদায় করতে অনুগ্রহ করে প্রিমিয়াম প্ল্যানে আপগ্রেড করুন।', 'error');
+        switchView('subscription');
+        return;
+      }
       const c = state.customers.find(item => item.id === customerId);
       if (!c) return;
       document.getElementById('colCustomerId').value = c.id;
@@ -3160,6 +4113,12 @@
 
     async function handleSaveDuePayment(e) {
       e.preventDefault();
+      if (state.isExpired) {
+        showToast('আপনার ট্রায়ালের মেয়াদ শেষ হয়েছে! অনুগ্রহ করে প্রিমিয়াম প্ল্যানে আপগ্রেড করুন।', 'error');
+        closeModal('collectDueModal');
+        switchView('subscription');
+        return;
+      }
       const customerId = document.getElementById('colCustomerId').value;
       const amount = parseFloat(document.getElementById('colAmount').value || 0);
       const method = document.getElementById('colMethod').value;
@@ -3255,6 +4214,12 @@
 
     async function handleSaveExpense(e) {
       e.preventDefault();
+      if (state.isExpired) {
+        showToast('আপনার ট্রায়ালের মেয়াদ শেষ হয়েছে! খরচ যোগ করতে অনুগ্রহ করে প্রিমিয়াম প্ল্যানে আপগ্রেড করুন।', 'error');
+        closeModal('addExpenseModal');
+        switchView('subscription');
+        return;
+      }
       const shopId = state.currentUser.uid;
       const category = document.getElementById('expCategory').value;
       const amount = parseFloat(document.getElementById('expAmount').value || 0);
@@ -3277,6 +4242,11 @@
     }
 
     async function handleDeleteExpense(id) {
+      if (state.isExpired) {
+        showToast('আপনার ট্রায়ালের মেয়াদ শেষ হয়েছে!', 'error');
+        switchView('subscription');
+        return;
+      }
       if (!confirm('আপনি কি নিশ্চিত যে এই খরচটি মুছে ফেলতে চান?')) return;
       try {
         await deleteDoc(doc(db, 'expenses', id));
@@ -3314,6 +4284,12 @@
 
     async function handleSaveSupplier(e) {
       e.preventDefault();
+      if (state.isExpired) {
+        showToast('আপনার ট্রায়ালের মেয়াদ শেষ হয়েছে! সাপ্লায়ার যোগ করতে অনুগ্রহ করে প্রিমিয়াম প্ল্যানে আপগ্রেড করুন।', 'error');
+        closeModal('addSupplierModal');
+        switchView('subscription');
+        return;
+      }
       const shopId = state.currentUser.uid;
       const name = document.getElementById('supName').value.trim();
       const company = document.getElementById('supCompany').value.trim();
@@ -3333,6 +4309,11 @@
     }
 
     async function handleDeleteSupplier(id) {
+      if (state.isExpired) {
+        showToast('আপনার ট্রায়ালের মেয়াদ শেষ হয়েছে!', 'error');
+        switchView('subscription');
+        return;
+      }
       if (!confirm('সাপ্লায়ার মুছে ফেলতে চান?')) return;
       try {
         await deleteDoc(doc(db, 'suppliers', id));
@@ -3773,8 +4754,37 @@
           });
         }
 
+        // Check if current user is an admin to show or hide the Super Admin button
+        let isUserAdmin = false;
+        if (user.email === 'minideveloper41@gmail.com') {
+          isUserAdmin = true;
+        } else {
+          try {
+            const adminDoc = await getDoc(doc(db, 'admins', user.uid));
+            if (adminDoc.exists()) {
+              isUserAdmin = true;
+            } else if (userSnap.exists() && userSnap.data()?.role === 'superadmin') {
+              isUserAdmin = true;
+            }
+          } catch (e) {
+            console.warn("Admin check note:", e.message);
+          }
+        }
+
+        const adminLink = document.getElementById('headerAdminLink');
+        const menuAdmin = document.getElementById('menuAdminLink');
+        if (isUserAdmin) {
+          adminLink?.classList.remove('hidden');
+          menuAdmin?.classList.remove('hidden');
+        } else {
+          adminLink?.classList.add('hidden');
+          menuAdmin?.classList.add('hidden');
+        }
+
         attachShopListeners(user.uid);
       } else {
+        document.getElementById('headerAdminLink')?.classList.add('hidden');
+        document.getElementById('menuAdminLink')?.classList.add('hidden');
         authBtnContainer.classList.remove('hidden');
         userProfileContainer.classList.add('hidden');
         btnUpgrade.classList.add('hidden');
@@ -3806,6 +4816,1060 @@
       monthStart.setDate(1);
       document.getElementById('reportStartDate').value = monthStart.toISOString().split('T')[0];
       document.getElementById('reportEndDate').value = todayISO;
+    }
+
+    // ================= AUDIO SYNTHESIZER (ZERO LATENCY WEB AUDIO API) =================
+    let audioCtx = null;
+    function playBeep(type = 'scan') {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        if (!audioCtx) audioCtx = new AudioCtx();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        const t = audioCtx.currentTime;
+
+        if (type === 'scan') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(1600, t);
+          gain.gain.setValueAtTime(0.2, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+          osc.start(t);
+          osc.stop(t + 0.12);
+        } else if (type === 'success') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(784, t);
+          osc.frequency.exponentialRampToValueAtTime(1046.5, t + 0.15);
+          gain.gain.setValueAtTime(0.25, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+          osc.start(t);
+          osc.stop(t + 0.3);
+        } else if (type === 'error') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(220, t);
+          osc.frequency.linearRampToValueAtTime(160, t + 0.25);
+          gain.gain.setValueAtTime(0.25, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+          osc.start(t);
+          osc.stop(t + 0.25);
+        }
+      } catch (err) {
+        console.debug('Audio not permitted yet or error:', err);
+      }
+    }
+
+    // ================= CAMERA BARCODE SCANNER (html5-qrcode) =================
+    // ================= CAMERA BARCODE SCANNER (html5-qrcode) =================
+    async function openBarcodeScanner(target = 'pos') {
+      if (state.isExpired) {
+        showToast('আপনার ট্রায়ালের মেয়াদ শেষ হয়েছে! বারকোড স্ক্যান করতে অনুগ্রহ করে প্রিমিয়াম প্ল্যানে আপগ্রেড করুন।', 'error');
+        switchView('subscription');
+        return;
+      }
+      state.scannerTarget = target;
+      openModal('barcodeScannerModal');
+      document.getElementById('scannerScanResult')?.classList.add('hidden');
+      await startCameraScanner();
+    }
+
+    async function openBarcodeScannerForProductAdd() {
+      await openBarcodeScanner('productAdd');
+    }
+
+    async function startCameraScanner(preferredCameraId = null) {
+      const area = document.getElementById('barcodeReaderArea');
+      if (!area) return;
+
+      if (!window.Html5Qrcode) {
+        area.innerHTML = '<div class="p-6 text-center text-rose-400 text-xs">বারকোড স্ক্যানার লাইব্রেরি লোড হচ্ছে, অনুগ্রহ করে কিছুক্ষণ পর আবার চেষ্টা করুন।</div>';
+        return;
+      }
+
+      if (state.scannerInstance) {
+        try {
+          await state.scannerInstance.stop();
+        } catch (e) {
+          console.debug('Scanner stop cleanup:', e);
+        }
+        state.scannerInstance = null;
+      }
+
+      area.innerHTML = '';
+
+      try {
+        const cameras = await Html5Qrcode.getCameras();
+        const select = document.getElementById('scannerCameraSelect');
+        if (select && cameras && cameras.length > 0) {
+          select.innerHTML = cameras.map((c, i) => `
+            <option value="${c.id}">${c.label || `Camera ${i + 1}`}</option>
+          `).join('');
+          if (preferredCameraId) {
+            select.value = preferredCameraId;
+          }
+        }
+
+        const html5QrCode = new Html5Qrcode("barcodeReaderArea");
+        state.scannerInstance = html5QrCode;
+
+        let cameraToUse = preferredCameraId;
+        if (!cameraToUse && cameras && cameras.length > 0) {
+          const rearCam = cameras.find(c => {
+            const lbl = (c.label || '').toLowerCase();
+            return lbl.includes('back') || lbl.includes('rear') || lbl.includes('environment') || lbl.includes('facing back');
+          });
+          cameraToUse = rearCam ? rearCam.id : cameras[cameras.length - 1].id;
+          if (select) select.value = cameraToUse;
+        }
+
+        const config = {
+          fps: 15,
+          qrbox: (viewfinderWidth, viewfinderHeight) => {
+            const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+            return {
+              width: Math.floor(minEdge * 0.82),
+              height: Math.floor(minEdge * 0.55)
+            };
+          },
+          aspectRatio: 1.0,
+          experimentalFeatures: {
+            useBarCodeDetectorIfSupported: true
+          }
+        };
+
+        const onScanSuccess = (decodedText) => {
+          const now = Date.now();
+          if (decodedText === state.lastScannedCode && (now - state.lastScanTime < 1300)) {
+            return;
+          }
+          state.lastScannedCode = decodedText;
+          state.lastScanTime = now;
+
+          handleBarcodeScanned(decodedText);
+
+          if (!state.isContinuousScan && state.scannerTarget !== 'productAdd') {
+            closeBarcodeScanner();
+          }
+        };
+
+        const onScanFailure = () => {};
+
+        if (cameraToUse) {
+          await html5QrCode.start(cameraToUse, config, onScanSuccess, onScanFailure);
+        } else {
+          await html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure);
+        }
+      } catch (err) {
+        console.error('Camera access error:', err);
+        area.innerHTML = `
+          <div class="p-6 text-center text-slate-300 text-xs space-y-2">
+            <i data-lucide="camera-off" class="w-8 h-8 mx-auto text-amber-400"></i>
+            <p class="font-bold text-amber-300">ক্যামেরা চালু করা যায়নি</p>
+            <p class="text-slate-400 text-[11px] leading-relaxed">ব্রাউজার থেকে ক্যামেরা পারমিশন অনুমোদন দিন অথবা নিচের বক্সে ম্যানুয়ালি বারকোড টাইপ করুন।</p>
+          </div>
+        `;
+        lucide.createIcons();
+      }
+    }
+
+    async function closeBarcodeScanner() {
+      if (state.scannerInstance) {
+        try {
+          await state.scannerInstance.stop();
+        } catch (e) {
+          console.debug('Scanner stop error:', e);
+        }
+        try {
+          state.scannerInstance.clear();
+        } catch (e) {
+          console.debug('Scanner clear error:', e);
+        }
+        state.scannerInstance = null;
+      }
+      state.scannerTarget = 'pos';
+      closeModal('barcodeScannerModal');
+    }
+
+    async function switchScannerCamera(cameraId) {
+      if (!cameraId) return;
+      await startCameraScanner(cameraId);
+    }
+
+    function toggleContinuousScan(isChecked) {
+      state.isContinuousScan = !!isChecked;
+    }
+
+    function handleBarcodeScanned(code) {
+      if (!code) return;
+      const cleanCode = code.trim();
+
+      // If scanner was invoked to populate product SKU in addProductModal:
+      if (state.scannerTarget === 'productAdd') {
+        const skuInput = document.getElementById('prodSku');
+        if (skuInput) skuInput.value = cleanCode;
+        playBeep('success');
+        closeBarcodeScanner();
+        checkProductSkuDuplicate(cleanCode);
+        const nameInput = document.getElementById('prodName');
+        if (nameInput) setTimeout(() => nameInput.focus(), 150);
+        showToast(`বারকোড কোড সেট করা হয়েছে: ${cleanCode}`, 'success');
+        state.scannerTarget = 'pos';
+        return;
+      }
+
+      const resultBox = document.getElementById('scannerScanResult');
+      const resultText = document.getElementById('scannerResultText');
+
+      const product = state.products.find(p => !p.archived && (
+        (p.sku && p.sku.toLowerCase() === cleanCode.toLowerCase()) ||
+        (p.barcode && p.barcode.toLowerCase() === cleanCode.toLowerCase()) ||
+        (p.id === cleanCode)
+      ));
+
+      if (product) {
+        addToPosCart(product.id);
+        if (resultBox && resultText) {
+          resultBox.className = 'mt-3 p-3 rounded-xl border text-xs flex items-center justify-between gap-2 bg-emerald-950/80 border-emerald-500/50 text-emerald-200';
+          resultText.innerHTML = `
+            <div>
+              <span class="font-bold text-emerald-300">কার্টে যোগ হয়েছে: ${product.name}</span>
+              <span class="block text-[10px] text-emerald-400 num">মূল্য: ৳ ${product.sellingPrice} | বর্তমান স্টক: ${product.stock} ${product.unit || ''}</span>
+            </div>
+          `;
+          resultBox.classList.remove('hidden');
+        }
+        showToast(`কার্টে যোগ হয়েছে: ${product.name}`, 'success');
+      } else {
+        playBeep('error');
+        if (resultBox && resultText) {
+          resultBox.className = 'mt-3 p-3 rounded-xl border text-xs flex flex-col sm:flex-row items-center justify-between gap-2 bg-amber-950/80 border-amber-500/50 text-amber-200';
+          resultText.innerHTML = `
+            <div>
+              <span class="font-bold text-amber-300">বারকোড মেলেনি: <code class="font-mono text-white bg-slate-800 px-1.5 py-0.5 rounded">${cleanCode}</code></span>
+              <span class="block text-[10px] text-amber-400/80">পণ্যটি এখনো আপনার স্টকে যোগ করা হয়নি।</span>
+            </div>
+          `;
+          resultBox.classList.remove('hidden');
+          const existingBtn = resultBox.querySelector('button');
+          if (existingBtn) existingBtn.remove();
+          const btn = document.createElement('button');
+          btn.className = 'px-3 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[11px] rounded-lg shrink-0';
+          btn.textContent = '+ পণ্য হিসেবে যোগ করুন';
+          btn.onclick = () => quickAddProductFromBarcode(cleanCode);
+          resultBox.appendChild(btn);
+        }
+        showToast(`বারকোড "${cleanCode}" কোনো পণ্যের সাথে মেলেনি`, 'error');
+      }
+    }
+
+    function checkProductSkuDuplicate(skuVal) {
+      const notice = document.getElementById('skuDuplicateNotice');
+      const text = document.getElementById('skuDuplicateText');
+      const stockBtn = document.getElementById('skuDuplicateStockBtn');
+      if (!notice || !text) return;
+
+      const val = (skuVal || '').trim().toLowerCase();
+      if (!val) {
+        notice.classList.add('hidden');
+        return;
+      }
+
+      const editId = document.getElementById('prodEditId')?.value;
+      const existing = state.products.find(p => !p.archived && p.id !== editId && (
+        (p.sku && p.sku.toLowerCase() === val) ||
+        (p.barcode && p.barcode.toLowerCase() === val)
+      ));
+
+      if (existing) {
+        notice.classList.remove('hidden');
+        text.innerHTML = `⚠️ এই বারকোডের পণ্য আগে থেকেই আছে: <strong>${existing.name}</strong> (বর্তমান স্টক: ${existing.stock} ${existing.unit || ''})`;
+        if (stockBtn) {
+          stockBtn.onclick = () => {
+            closeModal('addProductModal');
+            openStockAdjust(existing.id);
+          };
+        }
+      } else {
+        notice.classList.add('hidden');
+      }
+    }
+
+    function handleManualBarcodeSubmit() {
+      const input = document.getElementById('manualBarcodeInput');
+      if (!input) return;
+      const val = input.value.trim();
+      if (!val) {
+        showToast('অনুগ্রহ করে বারকোড নম্বর লিখুন', 'error');
+        return;
+      }
+      handleBarcodeScanned(val);
+      input.value = '';
+    }
+
+    function quickAddProductFromBarcode(code) {
+      closeBarcodeScanner();
+      openModal('addProductModal');
+      const skuInput = document.getElementById('prodSku');
+      if (skuInput) {
+        skuInput.value = code;
+        checkProductSkuDuplicate(code);
+      }
+      const nameInput = document.getElementById('prodName');
+      if (nameInput) setTimeout(() => nameInput.focus(), 150);
+    }
+
+    // ================= FAST CAMERA PRODUCT STACKER / SCANNER =================
+    async function openFastProductAddModal() {
+      if (state.isExpired) {
+        showToast('আপনার ট্রায়ালের মেয়াদ শেষ হয়েছে! পণ্য যোগ করতে অনুগ্রহ করে প্রিমিয়াম প্ল্যানে আপগ্রেড করুন।', 'error');
+        switchView('subscription');
+        return;
+      }
+      state.fastCurrentScannedCode = null;
+      state.fastCurrentExistingProduct = null;
+      
+      const emptyState = document.getElementById('fastIntakeEmptyState');
+      const newForm = document.getElementById('fastIntakeNewForm');
+      const existCard = document.getElementById('fastIntakeExistingCard');
+      if (emptyState) emptyState.classList.remove('hidden');
+      if (newForm) newForm.classList.add('hidden');
+      if (existCard) existCard.classList.add('hidden');
+
+      openModal('fastProductAddModal');
+      renderFastSessionLog();
+      await startFastCameraScanner();
+    }
+
+    async function closeFastProductAddModal() {
+      if (state.fastScannerInstance) {
+        try {
+          await state.fastScannerInstance.stop();
+        } catch (e) {
+          console.debug('Fast scanner stop error:', e);
+        }
+        try {
+          state.fastScannerInstance.clear();
+        } catch (e) {
+          console.debug('Fast scanner clear error:', e);
+        }
+        state.fastScannerInstance = null;
+      }
+      closeModal('fastProductAddModal');
+    }
+
+    async function startFastCameraScanner(preferredCameraId = null) {
+      const area = document.getElementById('fastBarcodeReaderArea');
+      if (!area) return;
+
+      if (!window.Html5Qrcode) {
+        area.innerHTML = '<div class="p-6 text-center text-rose-400 text-xs">ক্যামেরা লাইব্রেরি লোড হচ্ছে, অনুগ্রহ করে একটু পর চেষ্টা করুন।</div>';
+        return;
+      }
+
+      if (state.fastScannerInstance) {
+        try {
+          await state.fastScannerInstance.stop();
+        } catch (e) {
+          console.debug('Fast scanner cleanup error:', e);
+        }
+        state.fastScannerInstance = null;
+      }
+
+      area.innerHTML = '';
+
+      try {
+        const cameras = await Html5Qrcode.getCameras();
+        const select = document.getElementById('fastCameraSelect');
+        if (select && cameras && cameras.length > 0) {
+          select.innerHTML = cameras.map((c, i) => `
+            <option value="${c.id}">${c.label || `Camera ${i + 1}`}</option>
+          `).join('');
+          if (preferredCameraId) {
+            select.value = preferredCameraId;
+          }
+        }
+
+        const html5QrCode = new Html5Qrcode("fastBarcodeReaderArea");
+        state.fastScannerInstance = html5QrCode;
+
+        let cameraToUse = preferredCameraId;
+        if (!cameraToUse && cameras && cameras.length > 0) {
+          const rearCam = cameras.find(c => {
+            const lbl = (c.label || '').toLowerCase();
+            return lbl.includes('back') || lbl.includes('rear') || lbl.includes('environment') || lbl.includes('facing back');
+          });
+          cameraToUse = rearCam ? rearCam.id : cameras[cameras.length - 1].id;
+          if (select) select.value = cameraToUse;
+        }
+
+        const config = {
+          fps: 15,
+          qrbox: (w, h) => {
+            const minEdge = Math.min(w, h);
+            return {
+              width: Math.floor(minEdge * 0.85),
+              height: Math.floor(minEdge * 0.55)
+            };
+          },
+          aspectRatio: 1.0,
+          experimentalFeatures: {
+            useBarCodeDetectorIfSupported: true
+          }
+        };
+
+        let lastFastCode = '';
+        let lastFastTime = 0;
+
+        const onScanSuccess = (decodedText) => {
+          const now = Date.now();
+          if (decodedText === lastFastCode && (now - lastFastTime < 1800)) {
+            return;
+          }
+          lastFastCode = decodedText;
+          lastFastTime = now;
+          handleFastScannedBarcode(decodedText);
+        };
+
+        const onScanFailure = () => {};
+
+        if (cameraToUse) {
+          await html5QrCode.start(cameraToUse, config, onScanSuccess, onScanFailure);
+        } else {
+          await html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure);
+        }
+      } catch (err) {
+        console.error('Fast camera error:', err);
+        area.innerHTML = `
+          <div class="p-6 text-center text-slate-300 text-xs space-y-2">
+            <i data-lucide="camera-off" class="w-8 h-8 mx-auto text-amber-400"></i>
+            <p class="font-bold text-amber-300">ক্যামেরা চালু করা যায়নি</p>
+            <p class="text-slate-400 text-[11px]">পারমিশন অনুমোদন দিন অথবা নিচের ইনপুট বক্সে ম্যানুয়ালি কোড লিখুন।</p>
+          </div>
+        `;
+        lucide.createIcons();
+      }
+    }
+
+    function handleFastManualBarcodeSubmit() {
+      const input = document.getElementById('fastManualBarcodeInput');
+      const val = input ? input.value.trim() : '';
+      if (!val) {
+        showToast('বারকোড কোড টাইপ করুন', 'error');
+        return;
+      }
+      handleFastScannedBarcode(val);
+      input.value = '';
+    }
+
+    function handleFastScannedBarcode(code) {
+      if (!code) return;
+      const cleanCode = code.trim();
+
+      const emptyState = document.getElementById('fastIntakeEmptyState');
+      const newForm = document.getElementById('fastIntakeNewForm');
+      const existCard = document.getElementById('fastIntakeExistingCard');
+
+      // Check if product already exists
+      const existing = state.products.find(p => !p.archived && (
+        (p.sku && p.sku.toLowerCase() === cleanCode.toLowerCase()) ||
+        (p.barcode && p.barcode.toLowerCase() === cleanCode.toLowerCase()) ||
+        (p.id === cleanCode)
+      ));
+
+      if (existing) {
+        // Mode B: Existing Product Quick Restock
+        playBeep('scan');
+        state.fastCurrentExistingProduct = existing;
+        state.fastCurrentScannedCode = null;
+
+        if (emptyState) emptyState.classList.add('hidden');
+        if (newForm) newForm.classList.add('hidden');
+        if (existCard) {
+          existCard.classList.remove('hidden');
+          document.getElementById('fastExistSku').textContent = existing.sku || existing.id;
+          document.getElementById('fastExistName').textContent = existing.name;
+          document.getElementById('fastExistPrice').textContent = formatBDT(existing.sellingPrice);
+          document.getElementById('fastExistStock').textContent = existing.stock;
+          document.getElementById('fastExistUnit').textContent = existing.unit || 'পিস';
+          const customQty = document.getElementById('fastExistCustomQty');
+          if (customQty) customQty.value = '';
+        }
+        showToast(`পণ্য পাওয়া গেছে: ${existing.name}`, 'info');
+      } else {
+        // Mode A: New Product Intake
+        playBeep('scan');
+        state.fastCurrentScannedCode = cleanCode;
+        state.fastCurrentExistingProduct = null;
+
+        if (emptyState) emptyState.classList.add('hidden');
+        if (existCard) existCard.classList.add('hidden');
+        if (newForm) {
+          newForm.classList.remove('hidden');
+          document.getElementById('fastNewCodeBadge').textContent = cleanCode;
+          document.getElementById('fastProdName').value = '';
+          document.getElementById('fastProdCategory').value = 'মুদি ও খাদ্য';
+          document.getElementById('fastProdCost').value = '';
+          document.getElementById('fastProdPrice').value = '';
+          document.getElementById('fastProdStock').value = '10';
+          document.getElementById('fastProdSupplier').value = '';
+          setTimeout(() => document.getElementById('fastProdName')?.focus(), 150);
+        }
+        showToast(`নতুন বারকোড স্ক্যান হয়েছে: ${cleanCode}`, 'success');
+      }
+      lucide.createIcons();
+    }
+
+    function setFastCategory(cat) {
+      const input = document.getElementById('fastProdCategory');
+      if (input) input.value = cat;
+    }
+
+    async function saveFastNewProduct(e) {
+      e.preventDefault();
+      if (!state.currentUser) {
+        showToast('পণ্য যোগ করতে লগইন করুন', 'error');
+        return;
+      }
+      if (state.isExpired) {
+        showToast('আপনার ট্রায়ালের মেয়াদ শেষ হয়েছে!', 'error');
+        return;
+      }
+
+      const code = state.fastCurrentScannedCode;
+      if (!code) {
+        showToast('কোনো বারকোড কোড নির্বাচন করা নেই!', 'error');
+        return;
+      }
+
+      const shopId = state.currentUser.uid;
+      const name = document.getElementById('fastProdName').value.trim();
+      const category = document.getElementById('fastProdCategory').value.trim() || 'সাধারণ';
+      const unit = document.getElementById('fastProdUnit').value;
+      const purchaseCost = parseFloat(document.getElementById('fastProdCost').value || 0);
+      const sellingPrice = parseFloat(document.getElementById('fastProdPrice').value || 0);
+      const stock = parseInt(document.getElementById('fastProdStock').value || 0);
+      const supplier = document.getElementById('fastProdSupplier').value.trim();
+
+      const btn = document.getElementById('btnFastSaveNew');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = 'সংরক্ষণ হচ্ছে...';
+      }
+
+      try {
+        const prodData = {
+          shopId,
+          name,
+          sku: code,
+          barcode: code,
+          category,
+          unit,
+          purchaseCost,
+          sellingPrice,
+          stock,
+          minStock: 5,
+          supplier,
+          archived: false,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        };
+
+        const docRef = await addDoc(collection(db, 'products'), prodData);
+
+        // Record stock movement
+        await addDoc(collection(db, 'stockMovements'), {
+          shopId,
+          productId: docRef.id,
+          productName: name,
+          type: 'initial_stock',
+          quantity: stock,
+          previousStock: 0,
+          newStock: stock,
+          reason: 'ক্যামেরা স্ক্যানার দিয়ে দ্রুত পণ্য যোগ',
+          createdAt: serverTimestamp()
+        });
+
+        playBeep('success');
+        showToast(`"${name}" পণ্যটি সফলভাবে সংরক্ষিত হয়েছে!`, 'success');
+
+        // Add to session log
+        state.fastStackerSession.unshift({
+          id: docRef.id,
+          name,
+          sku: code,
+          sellingPrice,
+          stock,
+          unit,
+          type: 'new',
+          timestamp: new Date()
+        });
+
+        // Reset to empty state for next scan
+        state.fastCurrentScannedCode = null;
+        document.getElementById('fastIntakeNewForm')?.classList.add('hidden');
+        document.getElementById('fastIntakeEmptyState')?.classList.remove('hidden');
+        renderFastSessionLog();
+      } catch (err) {
+        console.error('Fast product save error:', err);
+        showToast(`পণ্য সংরক্ষণ ব্যর্থ: ${err.message}`, 'error');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4"></i><span>সংরক্ষণ করুন ও পরবর্তী পণ্য স্ক্যান করুন (Enter)</span>`;
+          lucide.createIcons();
+        }
+      }
+    }
+
+    async function quickIncrementStockFromFastScanner(qty) {
+      const prod = state.fastCurrentExistingProduct;
+      if (!prod) return;
+
+      const incrementQty = parseInt(qty);
+      if (isNaN(incrementQty) || incrementQty <= 0) return;
+
+      try {
+        const current = Number(prod.stock || 0);
+        const newStock = current + incrementQty;
+
+        const batch = writeBatch(db);
+        batch.update(doc(db, 'products', prod.id), {
+          stock: newStock,
+          updatedAt: serverTimestamp()
+        });
+
+        batch.set(doc(collection(db, 'stockMovements')), {
+          shopId: state.currentUser.uid,
+          productId: prod.id,
+          productName: prod.name,
+          type: 'adjustment_in',
+          quantity: incrementQty,
+          previousStock: current,
+          newStock: newStock,
+          reason: `ক্যামেরা ফাস্ট স্ক্যানারে +${incrementQty} স্টক ইন`,
+          createdAt: serverTimestamp()
+        });
+
+        await batch.commit();
+
+        playBeep('success');
+        showToast(`+${incrementQty} স্টক বৃদ্ধি করা হয়েছে (${prod.name})!`, 'success');
+
+        // Update local object
+        prod.stock = newStock;
+        document.getElementById('fastExistStock').textContent = newStock;
+
+        // Add to session activity
+        state.fastStackerSession.unshift({
+          id: prod.id,
+          name: prod.name,
+          sku: prod.sku || prod.id,
+          addedQty: incrementQty,
+          stock: newStock,
+          unit: prod.unit || 'পিস',
+          type: 'restock',
+          timestamp: new Date()
+        });
+
+        renderFastSessionLog();
+      } catch (err) {
+        showToast(`স্টক বাড়াতে ব্যর্থ: ${err.message}`, 'error');
+      }
+    }
+
+    function applyCustomIncrementFromFastScanner() {
+      const input = document.getElementById('fastExistCustomQty');
+      const val = parseInt(input?.value || 0);
+      if (isNaN(val) || val <= 0) {
+        showToast('সঠিক স্টক সংখ্যা লিখুন', 'error');
+        return;
+      }
+      quickIncrementStockFromFastScanner(val);
+      if (input) input.value = '';
+    }
+
+    function renderFastSessionLog() {
+      const container = document.getElementById('fastSessionLog');
+      const badge = document.getElementById('fastSessionCountBadge');
+      if (!container) return;
+
+      if (badge) badge.textContent = `${state.fastStackerSession.length} টি সম্পন্ন`;
+
+      if (state.fastStackerSession.length === 0) {
+        container.innerHTML = '<p class="text-slate-500 text-center py-2 text-[11px]">এখনো কোনো পণ্য স্ক্যান করে যুক্ত করা হয়নি।</p>';
+        return;
+      }
+
+      container.innerHTML = state.fastStackerSession.slice(0, 8).map(item => `
+        <div class="p-2 rounded-xl bg-navy-900 border border-slate-700/80 flex items-center justify-between text-xs">
+          <div class="truncate flex-1">
+            <span class="font-bold text-slate-200 truncate block">${item.name}</span>
+            <span class="text-[10px] text-slate-400 font-mono">কোড: ${item.sku}</span>
+          </div>
+          <div class="text-right shrink-0">
+            ${item.type === 'new' ? `
+              <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold text-[10px] border border-emerald-500/30">নতুন পণ্য (স্টক: ${item.stock})</span>
+            ` : `
+              <span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-bold text-[10px] border border-cyan-500/30">+${item.addedQty} স্টক (মোট: ${item.stock})</span>
+            `}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ================= BARCODE STICKER LABEL GENERATOR (JsBarcode) =================
+    function openBarcodePrinterModal(selectedProductId = null) {
+      const select = document.getElementById('printBarcodeSelect');
+      if (select) {
+        const activeProds = state.products.filter(p => !p.archived);
+        if (activeProds.length === 0) {
+          showToast('কোনো সক্রিয় পণ্য নেই!', 'error');
+          return;
+        }
+        select.innerHTML = activeProds.map(p => `
+          <option value="${p.id}">${p.name} (কোড: ${p.sku || p.id}) - ৳${p.sellingPrice}</option>
+        `).join('');
+        if (selectedProductId) {
+          select.value = selectedProductId;
+        }
+      }
+      openModal('barcodePrinterModal');
+      updateBarcodePrintPreview();
+    }
+
+    function updateBarcodePrintPreview() {
+      const select = document.getElementById('printBarcodeSelect');
+      const prodId = select?.value;
+      const copies = parseInt(document.getElementById('printBarcodeCopies')?.value || 1);
+      const container = document.getElementById('barcodeStickerPreview');
+      const printSheet = document.getElementById('printableBarcodeSheet');
+      if (!container || !prodId) return;
+
+      const product = state.products.find(p => p.id === prodId);
+      if (!product) return;
+
+      const shopName = state.shopProfile?.shopName || 'Stockora Mart';
+      const barcodeValue = product.sku || product.barcode || product.id.slice(0, 10).toUpperCase();
+
+      let stickersHtml = '';
+      const limit = Math.min(Math.max(1, copies), 48);
+
+      for (let i = 0; i < limit; i++) {
+        stickersHtml += `
+          <div class="barcode-label-card bg-white text-black p-2.5 rounded-lg border border-slate-300 shadow-sm flex flex-col items-center justify-between text-center select-none w-48">
+            <span class="text-[10px] font-bold text-slate-700 tracking-tight truncate w-full uppercase">${shopName}</span>
+            <span class="text-xs font-extrabold text-slate-900 leading-tight my-0.5 truncate w-full">${product.name}</span>
+            <div class="w-full flex justify-center my-1 overflow-hidden">
+              <svg id="barcode-preview-svg-${i}" class="max-w-full"></svg>
+            </div>
+            <div class="w-full flex items-center justify-between border-t border-dashed border-slate-400 pt-1 text-[11px]">
+              <span class="font-bold text-slate-800">সর্বোচ্চ খুচরা মূল্য</span>
+              <span class="text-sm font-black text-black num">৳ ${formatBDT(product.sellingPrice)}</span>
+            </div>
+          </div>
+        `;
+      }
+
+      container.innerHTML = stickersHtml;
+      if (printSheet) printSheet.innerHTML = stickersHtml;
+
+      if (window.JsBarcode) {
+        for (let i = 0; i < limit; i++) {
+          try {
+            JsBarcode(`#barcode-preview-svg-${i}`, barcodeValue, {
+              format: "CODE128",
+              lineColor: "#000000",
+              width: 1.6,
+              height: 38,
+              displayValue: true,
+              fontSize: 10,
+              textMargin: 2,
+              font: "monospace"
+            });
+          } catch (err) {
+            console.debug('JsBarcode render error:', err);
+          }
+        }
+      }
+    }
+
+    function printBarcodeLabels() {
+      document.body.classList.add('printing-barcodes');
+      window.print();
+      setTimeout(() => {
+        document.body.classList.remove('printing-barcodes');
+      }, 600);
+    }
+
+    // ================= DAILY CASH DRAWER / REGISTER TRACKING =================
+    function openCashRegisterModal() {
+      const todayStr = new Date().toISOString().split('T')[0];
+      const shopId = state.currentUser ? state.currentUser.uid : 'guest';
+      const storageKey = `stockora_opening_cash_${shopId}_${todayStr}`;
+      const savedMorning = parseFloat(localStorage.getItem(storageKey) || 0);
+
+      const morningInput = document.getElementById('regMorningCash');
+      if (morningInput) morningInput.value = savedMorning;
+
+      const todaySales = state.sales.filter(s => {
+        if (!s.createdAt || s.isReturned) return false;
+        const d = (s.createdAt.toDate ? s.createdAt.toDate() : new Date(s.createdAt)).toISOString().split('T')[0];
+        return d === todayStr;
+      });
+      const cashSales = todaySales
+        .filter(s => s.paymentMethod === 'cash')
+        .reduce((sum, s) => sum + Number(s.paidAmount || 0), 0);
+
+      const todayExp = state.expenses
+        .filter(e => e.date === todayStr)
+        .reduce((sum, e) => sum + Number(e.amount || 0), 0);
+
+      const expected = savedMorning + cashSales - todayExp;
+
+      const salesSpan = document.getElementById('regSalesCash');
+      const expSpan = document.getElementById('regExpensesCash');
+      const expCashSpan = document.getElementById('regExpectedCash');
+      if (salesSpan) salesSpan.textContent = formatBDT(cashSales);
+      if (expSpan) expSpan.textContent = formatBDT(todayExp);
+      if (expCashSpan) expCashSpan.textContent = formatBDT(expected);
+
+      calculateCashRegisterClosing();
+      openModal('cashRegisterModal');
+    }
+
+    function saveCashRegisterOpening() {
+      const todayStr = new Date().toISOString().split('T')[0];
+      const shopId = state.currentUser ? state.currentUser.uid : 'guest';
+      const storageKey = `stockora_opening_cash_${shopId}_${todayStr}`;
+      const morningVal = parseFloat(document.getElementById('regMorningCash')?.value || 0);
+      localStorage.setItem(storageKey, morningVal);
+      showToast('সকালের শুরুর ক্যাশ সংরক্ষিত হয়েছে', 'success');
+      openCashRegisterModal();
+    }
+
+    function calculateCashRegisterClosing() {
+      const expected = parseFloat((document.getElementById('regExpectedCash')?.textContent || '0').replace(/,/g, ''));
+      const actualVal = document.getElementById('regActualCash')?.value;
+      const actual = parseFloat(actualVal || 0);
+      const diff = actual - expected;
+
+      const notice = document.getElementById('regDiscrepancyNotice');
+      const text = document.getElementById('regDiscrepancyText');
+      if (!notice || !text) return;
+
+      if (!actualVal || actualVal.trim() === '') {
+        notice.classList.add('hidden');
+        return;
+      }
+
+      notice.classList.remove('hidden');
+      if (Math.abs(diff) < 0.01) {
+        notice.className = 'p-3 rounded-xl border text-xs flex items-center justify-between bg-emerald-950/80 border-emerald-500/50 text-emerald-200';
+        text.innerHTML = '<span class="font-bold text-emerald-300">✅ ক্যাশ নিখুঁত মিলেছে (Exact Match)! কোনো গরমিল নেই।</span>';
+      } else if (diff > 0) {
+        notice.className = 'p-3 rounded-xl border text-xs flex items-center justify-between bg-cyan-950/80 border-cyan-500/50 text-cyan-200';
+        text.innerHTML = `<span class="font-bold text-cyan-300">📈 ক্যাশ উদ্বৃত্ত (Surplus): +৳ ${formatBDT(diff)} টাকা বেশি রয়েছে।</span>`;
+      } else {
+        notice.className = 'p-3 rounded-xl border text-xs flex items-center justify-between bg-rose-950/80 border-rose-500/50 text-rose-200';
+        text.innerHTML = `<span class="font-bold text-rose-300">⚠️ ক্যাশ ঘাটতি (Shortage): ৳ ${formatBDT(Math.abs(diff))} টাকা কম রয়েছে! হিসাব পরীক্ষা করুন।</span>`;
+      }
+    }
+
+    // ================= SMART SUPPLIER REORDER SHEET =================
+    function openReorderModal() {
+      const lowProds = state.products.filter(p => !p.archived && Number(p.stock || 0) <= Number(p.minStock || 5));
+      const container = document.getElementById('reorderListContainer');
+      if (!container) return;
+
+      if (lowProds.length === 0) {
+        container.innerHTML = `
+          <div class="p-6 text-center text-slate-400 text-xs space-y-1">
+            <i data-lucide="check-circle-2" class="w-8 h-8 mx-auto text-emerald-400 mb-2"></i>
+            <p class="font-bold text-emerald-300">সব পণ্যের স্টক পর্যাপ্ত রয়েছে!</p>
+            <p class="text-slate-500 text-[11px]">বর্তমানে কোনো পণ্যে কম স্টকের সতর্কতা নেই।</p>
+          </div>
+        `;
+      } else {
+        container.innerHTML = lowProds.map(p => {
+          const current = Number(p.stock || 0);
+          const min = Number(p.minStock || 5);
+          const suggested = Math.max(5, (min * 2) - current);
+          return `
+            <div class="p-2.5 rounded-xl bg-navy-850 border border-slate-700/70 flex items-center justify-between gap-3 text-xs">
+              <div class="truncate flex-1">
+                <p class="font-bold text-slate-200 truncate">${p.name}</p>
+                <span class="text-[10px] text-slate-400">ক্যাটাগরি: ${p.category || 'সাধারণ'} | মহাজন/সাপ্লায়ার: <span class="text-cyan-300">${p.supplier || 'নির্দিষ্ট নেই'}</span></span>
+              </div>
+              <div class="text-right shrink-0">
+                <span class="text-[10px] text-rose-400 block font-bold num">বর্তমান: ${current} ${p.unit || ''} (মিনিমাম: ${min})</span>
+                <span class="text-xs font-bold text-emerald-400 num">অর্ডার পরামর্শ: +${suggested} ${p.unit || ''}</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+      lucide.createIcons();
+      openModal('reorderModal');
+    }
+
+    function copyReorderList() {
+      const lowProds = state.products.filter(p => !p.archived && Number(p.stock || 0) <= Number(p.minStock || 5));
+      if (lowProds.length === 0) {
+        showToast('অর্ডার করার মত কম স্টক পণ্য নেই', 'info');
+        return;
+      }
+      const shop = state.shopProfile || {};
+      const today = new Date().toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' });
+
+      let text = `📦 *জরুরি স্টক রি-অর্ডার তালিকা*\n`;
+      text += `দোকানের নাম: ${shop.shopName || 'আমার দোকান'}\n`;
+      text += `তারিখ: ${today}\n`;
+      if (shop.phone) text += `যোগাযোগ: ${shop.phone}\n`;
+      text += `----------------------------------------\n`;
+
+      lowProds.forEach((p, idx) => {
+        const current = Number(p.stock || 0);
+        const min = Number(p.minStock || 5);
+        const suggested = Math.max(5, (min * 2) - current);
+        text += `${idx + 1}. *${p.name}*\n`;
+        text += `   প্রয়োজন: *${suggested} ${p.unit || 'পিস'}* (বর্তমান স্টক: ${current}, মহাজন: ${p.supplier || 'সাধারণ'})\n`;
+      });
+
+      text += `----------------------------------------\n`;
+      text += `মোট অর্ডার আইটেম: ${lowProds.length} টি\n`;
+      text += `দয়া করে উল্লেখিত পণ্যসমূহ দ্রুত সরবরাহের ব্যবস্থা করুন। ধন্যবাদ।`;
+
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => {
+          showToast('রি-অর্ডার তালিকা ক্লিপবোর্ডে কপি হয়েছে! WhatsApp এ পেস্ট করুন।', 'success');
+        }).catch(() => {
+          showToast('কপি ব্যর্থ হয়েছে', 'error');
+        });
+      }
+    }
+
+    // ================= WHATSAPP 1-CLICK RECEIPT & DUE REMINDER =================
+    function shareInvoiceWhatsApp(saleId = null) {
+      let sale = null;
+      if (saleId) {
+        sale = state.sales.find(s => s.id === saleId);
+      }
+      if (!sale) {
+        sale = state.currentInvoice;
+      }
+      if (!sale) {
+        showToast('ইনভয়েস তথ্য পাওয়া যায়নি', 'error');
+        return;
+      }
+
+      const shop = state.shopProfile || {};
+      const dateStr = formatBDDate(sale.createdAt);
+
+      let text = `🧾 *ক্যাশ মেমো / ডিজিটাল রসিদ*\n`;
+      text += `🏪 *${shop.shopName || 'Stockora Mart'}*\n`;
+      if (shop.address) text += `📍 ${shop.address}\n`;
+      if (shop.phone) text += `📞 ${shop.phone}\n`;
+      text += `----------------------------------------\n`;
+      text += `রসিদ নং: *${sale.invoiceNo}*\n`;
+      text += `তারিখ: ${dateStr}\n`;
+      text += `ক্রেতা: *${sale.customerName || 'নগদ ক্রেতা'}*\n`;
+      text += `----------------------------------------\n`;
+      text += `*পণ্য তালিকা:*\n`;
+
+      (sale.items || []).forEach(item => {
+        text += `• ${item.name} (${item.quantity} x ৳${item.unitPrice}) = ৳${item.subtotal}\n`;
+      });
+
+      text += `----------------------------------------\n`;
+      text += `উপমোট: ৳${sale.subtotal}\n`;
+      if (sale.discount > 0) text += `ছাড়: -৳${sale.discount}\n`;
+      if (sale.tax > 0) text += `ভ্যাট: +৳${sale.tax}\n`;
+      text += `*সর্বমোট প্রদেয়: ৳${sale.grandTotal}*\n`;
+      text += `পরিশোধিত: ৳${sale.paidAmount} (${sale.paymentMethod === 'due' ? 'বাকি' : (sale.paymentMethod || 'নগদ')})\n`;
+      if (sale.dueAmount > 0) {
+        text += `*এই চালানের বাকি: ৳${sale.dueAmount}*\n`;
+      }
+      if (sale.customerId) {
+        const prevDue = sale.customerPreviousDue !== undefined ? Number(sale.customerPreviousDue) : 0;
+        const totalDue = sale.customerTotalDueAfter !== undefined ? Number(sale.customerTotalDueAfter) : (prevDue + Number(sale.dueAmount || 0));
+        if (totalDue > 0) {
+          if (prevDue > 0) text += `পূর্বের বকেয়া: ৳${prevDue}\n`;
+          text += `*সর্বমোট অবশিষ্ট বকেয়া: ৳${totalDue}*\n`;
+        }
+      }
+      text += `----------------------------------------\n`;
+      text += `${shop.invoiceNote || 'আমাদের সাথে কেনাকাটা করার জন্য ধন্যবাদ!'}\n`;
+      text += `_Powered by Stockora SaaS_`;
+
+      const encoded = encodeURIComponent(text);
+      let targetPhone = '';
+      if (sale.customerPhone) {
+        let p = sale.customerPhone.replace(/[^0-9]/g, '');
+        if (p.startsWith('0')) p = '88' + p;
+        targetPhone = p;
+      }
+
+      const url = targetPhone ? `https://wa.me/${targetPhone}?text=${encoded}` : `https://api.whatsapp.com/send?text=${encoded}`;
+      window.open(url, '_blank');
+    }
+
+    function sendCustomerDueWhatsApp(customerId) {
+      const customer = state.customers.find(c => c.id === customerId);
+      if (!customer) {
+        showToast('কাস্টমার তথ্য মেলেনি', 'error');
+        return;
+      }
+      if (Number(customer.totalDue || 0) <= 0) {
+        showToast('এই কাস্টমারের কোনো বাকি নেই!', 'info');
+        return;
+      }
+
+      const shop = state.shopProfile || {};
+      let phone = (customer.phone || '').replace(/[^0-9]/g, '');
+      if (phone.startsWith('0')) phone = '88' + phone;
+
+      let msg = `শ্রদ্ধেয় *${customer.name}*,\n`;
+      msg += `আদাব/সালাম।\n\n`;
+      msg += `*${shop.shopName || 'আমাদের দোকান'}* থেকে বিনীতভাবে জানানো যাচ্ছে যে, আপনার হিসাব অনুযায়ী বর্তমান অবশিষ্ট বাকির পরিমাণ *৳ ${formatBDT(customer.totalDue)} টাকা*।\n\n`;
+      if (shop.phone) {
+        msg += `বিকাশ বা নগদ পেমেন্ট নম্বর: *${shop.phone}*\n`;
+      }
+      msg += `সুবিধাজনক সময়ে আপনার বকেয়া পরিশোধ করার জন্য অনুরোধ করা হলো।\n\n`;
+      msg += `ধন্যবাদ,\n`;
+      msg += `*${shop.shopName || 'দোকান কর্তৃপক্ষ'}*\n`;
+      if (shop.phone) msg += `মোবাইল: ${shop.phone}`;
+
+      const url = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}` : `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
+      window.open(url, '_blank');
+    }
+
+    // Physical Barcode Scanner listener on posSearchInput
+    const posInput = document.getElementById('posSearchInput');
+    if (posInput) {
+      posInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const query = posInput.value.trim();
+          if (!query) return;
+
+          const match = state.products.find(p => !p.archived && (
+            (p.sku && p.sku.toLowerCase() === query.toLowerCase()) ||
+            (p.barcode && p.barcode.toLowerCase() === query.toLowerCase()) ||
+            (p.id === query)
+          ));
+
+          if (match) {
+            addToPosCart(match.id);
+            showToast(`কার্টে যোগ হয়েছে: ${match.name}`, 'success');
+            posInput.value = '';
+            filterPosProducts();
+          } else {
+            filterPosProducts();
+          }
+        }
+      });
     }
 
     // Expose app methods to window for inline onclick handlers
@@ -3856,7 +5920,44 @@
       exportReportSummaryCsv,
       updatePayAmountByPackage,
       handlePaymentSubmit,
-      handleSaveSettings
+      handleSaveSettings,
+      // POS Customer Credit & Due enhancements
+      openQuickCustomerModalFromPos,
+      onPosCustomerChange,
+      onPosPaymentMethodChange,
+      applyFullDueSale,
+      sendCustomerDueWhatsAppFromPos,
+      // Barcode Scanner & Product Add
+      openBarcodeScanner,
+      openBarcodeScannerForProductAdd,
+      closeBarcodeScanner,
+      switchScannerCamera,
+      toggleContinuousScan,
+      handleManualBarcodeSubmit,
+      quickAddProductFromBarcode,
+      checkProductSkuDuplicate,
+      // Fast Camera Product Stacker & Restocker
+      openFastProductAddModal,
+      closeFastProductAddModal,
+      startFastCameraScanner,
+      handleFastManualBarcodeSubmit,
+      setFastCategory,
+      saveFastNewProduct,
+      quickIncrementStockFromFastScanner,
+      applyCustomIncrementFromFastScanner,
+      // Other tools
+      applyQuickCashTender,
+      openBarcodePrinterModal,
+      updateBarcodePrintPreview,
+      printBarcodeLabels,
+      openCashRegisterModal,
+      saveCashRegisterOpening,
+      calculateCashRegisterClosing,
+      openReorderModal,
+      copyReorderList,
+      shareInvoiceWhatsApp,
+      sendCustomerDueWhatsApp,
+      playBeep
     };
 
     lucide.createIcons();
